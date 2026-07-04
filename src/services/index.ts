@@ -1,0 +1,15 @@
+export { academyProgressService } from './academyProgressService';
+export { aiMockService } from './aiMockService';
+export { aiTutorService } from './aiTutorService';
+export { campaignProgressService } from './campaignProgressService';
+export { codeArenaService } from './codeArenaService';
+export { localAnalyticsService } from './localAnalyticsService';
+export { leaderboardService } from './leaderboardService';
+export { reviewService } from './reviewService';
+export { soundService } from './soundService';
+export { storage } from './storage';
+export { streakService } from './streakService';
+export { storageKeys } from './storageKeys';
+export { syncService } from './syncService';
+export { buildProfessorBytePrompt } from './promptBuilder';
+export { isSupabaseConfigured, supabase } from './supabaseClient';
