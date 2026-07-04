@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppRoute } from './routes';
 import {
   AcademyScreen,
+  AchievementsScreen,
   CareerScreen,
   CodeArenaScreen,
   CodeChallengeScreen,
@@ -30,7 +31,7 @@ import { syncService } from '../services/syncService';
 
 export function AppNavigator() {
   const { session, loading: checkingAuth } = useAuth();
-  const { profile, loading: playerLoading, reloadProfile } = usePlayer();
+  const { profile, loading: playerLoading, reloadProfile, recentAchievements, clearRecentAchievements } = usePlayer();
   const [route, setRoute] = useState<AppRoute>({ name: 'home' });
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -64,6 +65,12 @@ export function AppNavigator() {
   useEffect(() => {
     if (!session) setRoute({ name: 'home' });
   }, [session]);
+
+  useEffect(() => {
+    if (!recentAchievements.length) return;
+    const timeout = setTimeout(clearRecentAchievements, 4200);
+    return () => clearTimeout(timeout);
+  }, [clearRecentAchievements, recentAchievements.length]);
 
   useEffect(() => {
     if (!user) {
@@ -107,25 +114,55 @@ export function AppNavigator() {
   if (checkingAuth || checkingOnboarding || playerLoading) return <AuthLoadingScreen />;
   if (!session) return <LoginScreen goBack={() => undefined} openRegister={() => undefined} openAccount={goHome} showBackButton={false} />;
   if (needsOnboarding) return <OnboardingScreen onDone={() => setNeedsOnboarding(false)} />;
-  if (route.name === 'account') return <ProfileScreen navigate={setRoute} goBack={goHome} initialSection="account" />;
-  if (route.name === 'map') return <MapScreen navigate={setRoute} goBack={goHome} />;
-  if (route.name === 'premium') return <PremiumScreen goBack={goHome} />;
-  if (route.name === 'dailyReward') return <DailyRewardScreen goBack={goHome} />;
-  if (route.name === 'academy') return <AcademyScreen navigate={setRoute} goBack={goHome} />;
-  if (route.name === 'lesson') return <LessonScreen lessonId={route.lessonId} navigate={setRoute} goBack={() => setRoute({ name: 'academy' })} />;
-  if (route.name === 'codeArena') return <CodeArenaScreen navigate={setRoute} goBack={goHome} />;
-  if (route.name === 'codeChallenge') return <CodeChallengeScreen challengeId={route.challengeId} challengeIds={route.challengeIds} goBack={() => setRoute({ name: 'codeArena' })} />;
-  if (route.name === 'quiz') return <QuizScreen stage={route.stage} navigate={setRoute} goBack={() => setRoute({ name: 'map' })} />;
-  if (route.name === 'profile') return <ProfileScreen navigate={setRoute} goBack={goHome} />;
-  if (route.name === 'professorByte') return <ProfessorByteScreen goBack={() => setRoute(route.returnTo ?? { name: 'home' })} initialPrompt={route.initialPrompt} context={route.context} />;
-  if (route.name === 'ranking') return <RankingScreen goBack={goHome} />;
-  if (route.name === 'shop') return <ShopScreen goBack={goHome} openPremium={() => setRoute({ name: 'premium' })} />;
-  if (route.name === 'settings') return <SettingsScreen goBack={goHome} openAccount={() => setRoute({ name: 'account' })} />;
-  if (route.name === 'career') return <CareerScreen navigate={setRoute} goBack={goHome} />;
-  if (route.name === 'campaign') return <CampaignScreen navigate={setRoute} goBack={goHome} />;
-  if (route.name === 'reviewLab') return <ReviewLabScreen navigate={setRoute} goBack={goHome} />;
+  const withToast = (screen: ReactElement) => (
+    <>
+      {screen}
+      <AchievementToast achievements={recentAchievements} onDismiss={clearRecentAchievements} />
+    </>
+  );
 
-  return <HomeScreen navigate={setRoute} />;
+  if (route.name === 'account') return withToast(<ProfileScreen navigate={setRoute} goBack={goHome} initialSection="account" />);
+  if (route.name === 'map') return withToast(<MapScreen navigate={setRoute} goBack={goHome} />);
+  if (route.name === 'premium') return withToast(<PremiumScreen goBack={goHome} />);
+  if (route.name === 'dailyReward') return withToast(<DailyRewardScreen goBack={goHome} />);
+  if (route.name === 'achievements') return withToast(<AchievementsScreen goBack={goHome} />);
+  if (route.name === 'academy') return withToast(<AcademyScreen navigate={setRoute} goBack={goHome} />);
+  if (route.name === 'lesson') return withToast(<LessonScreen lessonId={route.lessonId} navigate={setRoute} goBack={() => setRoute({ name: 'academy' })} />);
+  if (route.name === 'codeArena') return withToast(<CodeArenaScreen navigate={setRoute} goBack={goHome} />);
+  if (route.name === 'codeChallenge') return withToast(<CodeChallengeScreen challengeId={route.challengeId} challengeIds={route.challengeIds} goBack={() => setRoute({ name: 'codeArena' })} />);
+  if (route.name === 'quiz') return withToast(<QuizScreen stage={route.stage} navigate={setRoute} goBack={() => setRoute({ name: 'map' })} />);
+  if (route.name === 'profile') return withToast(<ProfileScreen navigate={setRoute} goBack={goHome} />);
+  if (route.name === 'professorByte') return withToast(<ProfessorByteScreen goBack={() => setRoute(route.returnTo ?? { name: 'home' })} initialPrompt={route.initialPrompt} context={route.context} />);
+  if (route.name === 'ranking') return withToast(<RankingScreen goBack={goHome} />);
+  if (route.name === 'shop') return withToast(<ShopScreen goBack={goHome} openPremium={() => setRoute({ name: 'premium' })} />);
+  if (route.name === 'settings') return withToast(<SettingsScreen goBack={goHome} openAccount={() => setRoute({ name: 'account' })} />);
+  if (route.name === 'career') return withToast(<CareerScreen navigate={setRoute} goBack={goHome} />);
+  if (route.name === 'campaign') return withToast(<CampaignScreen navigate={setRoute} goBack={goHome} />);
+  if (route.name === 'reviewLab') return withToast(<ReviewLabScreen navigate={setRoute} goBack={goHome} />);
+
+  return withToast(<HomeScreen navigate={setRoute} />);
+}
+
+function AchievementToast({ achievements, onDismiss }: { achievements: { title: string; icon: string; reward?: { xp?: number; coins?: number } }[]; onDismiss: () => void }) {
+  const { colors } = useSettings();
+  if (!achievements.length) return null;
+  const first = achievements[0];
+  const extra = achievements.length > 1 ? ` +${achievements.length - 1}` : '';
+  const reward = first.reward ? ` • +${first.reward.xp ?? 0} XP / +${first.reward.coins ?? 0} moedas` : '';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Fechar conquista desbloqueada"
+      onPress={onDismiss}
+      style={[styles.toast, { backgroundColor: colors.surface, borderColor: colors.success }]}
+    >
+      <Text style={styles.toastIcon}>{first.icon}</Text>
+      <View style={styles.toastCopy}>
+        <Text style={[styles.toastKicker, { color: colors.success }]}>Conquista desbloqueada{extra}</Text>
+        <Text style={[styles.toastTitle, { color: colors.text }]} numberOfLines={1}>{first.title}{reward}</Text>
+      </View>
+    </Pressable>
+  );
 }
 
 function AuthLoadingScreen() {
@@ -140,5 +177,22 @@ function AuthLoadingScreen() {
 
 const styles = StyleSheet.create({
   loadingScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
-  loadingText: { fontSize: 13, fontWeight: '800' }
+  loadingText: { fontSize: 13, fontWeight: '800' },
+  toast: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 18,
+    minHeight: 64,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+  toastIcon: { fontSize: 24 },
+  toastCopy: { flex: 1 },
+  toastKicker: { fontSize: 11, lineHeight: 14, fontWeight: '900', textTransform: 'uppercase' },
+  toastTitle: { fontSize: 13, lineHeight: 17, fontWeight: '900' }
 });

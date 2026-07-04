@@ -69,6 +69,40 @@ export interface AnswerHistoryItem {
   answeredAt: string;
 }
 
+export type AchievementId = string;
+export type MissionType = 'daily' | 'weekly';
+export type PlayerActivityType = 'login' | 'challenge' | 'campaign_mission' | 'academy_lesson' | 'arena_challenge' | 'shop_purchase' | 'xp' | 'streak';
+
+export interface AchievementUnlock {
+  id: AchievementId;
+  unlockedAt: string;
+}
+
+export interface PlayerMissionState {
+  id: string;
+  type: MissionType;
+  progress: number;
+  goal: number;
+  completed: boolean;
+  claimed: boolean;
+  resetAt: string;
+}
+
+export interface PlayerStats {
+  totalChallengesCompleted: number;
+  campaignMissionsCompleted: number;
+  academyLessonsCompleted: number;
+  arenaChallengesCompleted: number;
+  shopPurchases: number;
+  dailyLoginCount: number;
+  xpEarnedToday: number;
+  xpEarnedThisWeek: number;
+  studiedLanguagesThisWeek: string[];
+  lastLoginDate?: string;
+  lastDailyReset?: string;
+  lastWeeklyReset?: string;
+}
+
 export interface PlayerProfile {
   name: string;
   avatar: string;
@@ -80,6 +114,11 @@ export interface PlayerProfile {
   unlockedAreaIds: AreaId[];
   completedStages: Record<string, StageResult>;
   achievements: string[];
+  achievementUnlocks?: Record<AchievementId, AchievementUnlock>;
+  dailyMissions?: Record<string, PlayerMissionState>;
+  weeklyMissions?: Record<string, PlayerMissionState>;
+  claimedRewards?: string[];
+  stats?: PlayerStats;
   ownedItems: string[];
   selectedTheme: ThemeMode;
   answerHistory: AnswerHistoryItem[];

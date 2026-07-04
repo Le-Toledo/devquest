@@ -11,26 +11,24 @@ O Professor Byte precisa evoluir para um tutor inteligente sem expor chaves de I
 ## Decision
 
 - O app nunca chama provedores de IA diretamente com API key.
-- O app chama apenas um endpoint HTTPS configurado em `EXPO_PUBLIC_AI_TUTOR_ENDPOINT`.
-- O endpoint serverless e responsavel por guardar a chave de IA em variavel secreta do servidor.
-- Se o endpoint nao existir, nao for HTTPS, falhar ou retornar payload invalido, o app usa `aiMockService`.
+- O app chama apenas a Supabase Edge Function `professor-byte-ai` com sessao autenticada.
+- A Edge Function e responsavel por guardar `OPENROUTER_API_KEY` em secret do Supabase.
+- Se a funcao, a sessao, a rede ou o provedor de IA falhar, o app usa `aiMockService`.
 - O historico do chat fica local em AsyncStorage para manter funcionamento offline.
-- O prompt e montado por `promptBuilder.ts` com contexto educacional, historico curto e instrucoes do Professor Byte.
+- O prompt final e montado na Edge Function com contexto educacional e instrucoes do Professor Byte.
 
-## Endpoint Esperado
+## Edge Function
 
 Request:
 
 ```json
 {
-  "message": "Explique meu erro",
-  "prompt": "Prompt completo montado pelo app",
-  "history": [],
-  "context": {
-    "source": "review",
-    "language": "kotlin",
-    "concept": "null safety"
-  }
+  "mode": "hint",
+  "source": "arena",
+  "language": "JavaScript",
+  "level": "iniciante",
+  "question": "Qual alternativa corrige este bug?",
+  "options": ["..."]
 }
 ```
 
@@ -38,14 +36,15 @@ Response:
 
 ```json
 {
-  "answer": "Resposta didatica do Professor Byte"
+  "answer": "Resposta didatica do Professor Byte",
+  "mode": "hint"
 }
 ```
 
 ## Security
 
-- Nunca colocar OpenAI, Anthropic, Gemini ou outra API key no app.
-- Validar autenticacao quando quiser limitar IA a usuarios logados.
+- Nunca colocar OpenRouter, OpenAI, Anthropic, Gemini ou outra API key no app.
+- Validar autenticacao Supabase antes de chamar o provedor de IA.
 - Aplicar rate limit por usuario, IP e dispositivo.
 - Definir teto de tokens e tamanho maximo de entrada.
 - Registrar metricas de uso sem salvar segredos nem dados sensiveis desnecessarios.
@@ -53,4 +52,4 @@ Response:
 
 ## Consequences
 
-O Professor Byte funciona imediatamente em modo mock e pode receber IA real depois sem mudar o app. A qualidade do modo remoto depende do endpoint serverless, do modelo escolhido e dos limites de custo configurados no backend.
+O Professor Byte funciona com fallback local e pode usar IA real sem expor secrets no app. A qualidade do modo remoto depende da Edge Function, do modelo escolhido no OpenRouter e dos limites de custo configurados no provedor.

@@ -13,7 +13,7 @@ export function DailyRewardScreen({ goBack }: { goBack: () => void }) {
   const claim = async () => {
     const result = await streakService.claimDailyReward();
     if (result.claimed) {
-      awardCampaignReward(80, 120, ['daily-reward']);
+      awardCampaignReward(80, 120, ['daily-reward'], { type: 'streak', xp: 80 });
     }
     goBack();
   };

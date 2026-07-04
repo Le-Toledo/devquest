@@ -5,7 +5,6 @@ import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
 import { GradientScreen } from '../components/GradientScreen';
 import { ProgressBar } from '../components/ProgressBar';
-import { achievementsCatalog } from '../data/missions';
 import { campaignChapters } from '../data/campaignChapters';
 import { useAuth } from '../hooks/useAuth';
 import { usePlayer } from '../hooks/usePlayer';
@@ -23,6 +22,7 @@ import { CodeArenaProgress } from '../types/codeArena';
 import { defaultStreakState, streakService, StreakState } from '../services/streakService';
 import { defaultLocalAnalytics, localAnalyticsService, LocalAnalytics } from '../services/localAnalyticsService';
 import { syncService } from '../services/syncService';
+import { achievementDefinitions } from '../services/playerMetaService';
 import { CloudProgress, SyncResult } from '../types/backend';
 import { progressToNextLevel } from '../utils/progression';
 
@@ -291,11 +291,14 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
 
         <GameCard>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Conquistas</Text>
-          {achievementsCatalog.map((achievement) => {
+          <Text style={[styles.metric, { color: colors.muted }]}>
+            {profile.achievements.length}/{achievementDefinitions.length} conquistas liberadas. Veja detalhes e missões no Hub em Conquistas.
+          </Text>
+          {achievementDefinitions.slice(0, 8).map((achievement) => {
             const unlocked = profile.achievements.includes(achievement.id);
             return (
               <View key={achievement.id} style={[styles.achievement, { borderColor: colors.border, opacity: unlocked ? 1 : 0.5 }]}>
-                <Text style={[styles.achievementTitle, { color: colors.text }]}>{unlocked ? '★ ' : '☆ '}{achievement.title}</Text>
+                <Text style={[styles.achievementTitle, { color: colors.text }]}>{achievement.icon} {unlocked ? 'Liberada: ' : 'Bloqueada: '}{achievement.title}</Text>
                 <Text style={[styles.subtitle, { color: colors.muted }]}>{achievement.description}</Text>
               </View>
             );

@@ -30,7 +30,7 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
     { title: 'Academia Dev', subtitle: 'Aulas e base', icon: 'school', tone: 'secondary', onPress: () => navigate({ name: 'academy' }) },
     { title: 'Arena de Código', subtitle: 'Desafios práticos', icon: 'code-slash', tone: 'accent', onPress: () => navigate({ name: 'codeArena' }) },
     { title: 'Laboratório', subtitle: 'Treino com erros', icon: 'flask', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
-    { title: 'Revisão', subtitle: 'Fixação guiada', icon: 'refresh-circle', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
+    { title: 'Conquistas', subtitle: 'Metas e recompensas', icon: 'trophy', tone: 'success', onPress: () => navigate({ name: 'achievements' }) },
     { title: 'Perfil', subtitle: 'Estatísticas', icon: 'person-circle', tone: 'secondary', onPress: () => navigate({ name: 'profile' }) },
     { title: 'Loja', subtitle: 'Itens e moedas', icon: 'storefront', tone: 'accent', onPress: () => navigate({ name: 'shop' }) },
     { title: 'Premium', subtitle: 'Benefícios', icon: 'diamond', tone: 'premium', onPress: () => navigate({ name: 'premium' }) }

@@ -12,9 +12,16 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.cloud_progress (
+create table if not exists public.player_progress (
   user_id uuid primary key references auth.users(id) on delete cascade,
+  player_name text,
+  xp int4 not null default 0,
+  coins int4 not null default 0,
+  level int4 not null default 1,
   progress jsonb not null default '{}'::jsonb,
+  streak jsonb not null default '{}'::jsonb,
+  achievements jsonb not null default '{}'::jsonb,
+  settings jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -43,7 +50,7 @@ create index if not exists leaderboard_entries_language_idx
   on public.leaderboard_entries (favorite_language);
 
 alter table public.profiles enable row level security;
-alter table public.cloud_progress enable row level security;
+alter table public.player_progress enable row level security;
 alter table public.leaderboard_entries enable row level security;
 
 drop policy if exists "Profiles are readable by owner" on public.profiles;
@@ -62,19 +69,19 @@ create policy "Profiles are updatable by owner"
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
-drop policy if exists "Cloud progress is readable by owner" on public.cloud_progress;
-create policy "Cloud progress is readable by owner"
-  on public.cloud_progress for select
+drop policy if exists "Player progress is readable by owner" on public.player_progress;
+create policy "Player progress is readable by owner"
+  on public.player_progress for select
   using (auth.uid() = user_id);
 
-drop policy if exists "Cloud progress is insertable by owner" on public.cloud_progress;
-create policy "Cloud progress is insertable by owner"
-  on public.cloud_progress for insert
+drop policy if exists "Player progress is insertable by owner" on public.player_progress;
+create policy "Player progress is insertable by owner"
+  on public.player_progress for insert
   with check (auth.uid() = user_id);
 
-drop policy if exists "Cloud progress is updatable by owner" on public.cloud_progress;
-create policy "Cloud progress is updatable by owner"
-  on public.cloud_progress for update
+drop policy if exists "Player progress is updatable by owner" on public.player_progress;
+create policy "Player progress is updatable by owner"
+  on public.player_progress for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 

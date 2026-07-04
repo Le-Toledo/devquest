@@ -101,7 +101,7 @@ export function CampaignScreen({ navigate, goBack }: { navigate: Navigate; goBac
     const rewardedProgress = alreadyRewarded ? completedProgress : await campaignProgressService.collectReward(completedProgress, rewardId);
     setProgress(rewardedProgress);
     if (!alreadyRewarded) {
-      awardCampaignReward(mission.rewardXp, mission.rewardCoins, ['campaign-first-step']);
+      awardCampaignReward(mission.rewardXp, mission.rewardCoins, ['campaign-first-step'], { type: 'campaign_mission', xp: mission.rewardXp, language: mission.areaId });
       localAnalyticsService.recordActivity({ campaign: true, areaId: mission.areaId }).catch(() => undefined);
     }
     setMode({ name: 'result', mission, victory: true });
@@ -119,7 +119,7 @@ export function CampaignScreen({ navigate, goBack }: { navigate: Navigate; goBac
     if (boss.id === 'boss-null') achievements.push('campaign-kotlin-warrior');
     if (boss.id === 'boss-legacy') achievements.push('campaign-legacy-survivor');
     if (boss.id === 'boss-master') achievements.push('campaign-final-interview');
-    awardCampaignReward(boss.rewardXp, boss.rewardCoins, achievements);
+    awardCampaignReward(boss.rewardXp, boss.rewardCoins, achievements, { type: 'challenge', xp: boss.rewardXp });
     const mission = missionsByChapter(chapter.id).at(-1);
     if (mission) setMode({ name: 'result', mission, victory: true });
     else setMode({ name: 'map' });

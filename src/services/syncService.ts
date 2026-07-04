@@ -10,6 +10,7 @@ import { defaultStreakState, streakService } from './streakService';
 import { supabase } from './supabaseClient';
 import { AuthUser, CloudProgress, SyncResult } from '../types/backend';
 import { PlayerProfile, ThemeMode } from '../types/game';
+import { normalizePlayerMeta } from './playerMetaService';
 import { calculateLevel } from '../utils/progression';
 
 const latestIso = () => new Date().toISOString();
@@ -50,7 +51,7 @@ const loadLastSyncAt = async () => AsyncStorage.getItem(storageKeys.cloudSyncAt)
 const saveLastSyncAt = async (value: string) => AsyncStorage.setItem(storageKeys.cloudSyncAt, value);
 
 const normalizePlayer = (player: PlayerProfile): PlayerProfile => ({
-  ...player,
+  ...normalizePlayerMeta(player),
   level: calculateLevel(player.xp),
   unlockedAreaIds: Array.from(new Set(player.unlockedAreaIds)),
   achievements: Array.from(new Set(player.achievements)),

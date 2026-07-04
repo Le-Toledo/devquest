@@ -1,5 +1,6 @@
 export { AcademyScreen } from './AcademyScreen';
 export { AccountScreen } from './AccountScreen';
+export { AchievementsScreen } from './AchievementsScreen';
 export { BossIntroScreen } from './BossIntroScreen';
 export { CampaignIntroScreen } from './CampaignIntroScreen';
 export { CampaignMissionScreen } from './CampaignMissionScreen';

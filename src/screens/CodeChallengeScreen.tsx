@@ -10,6 +10,7 @@ import { useSettings } from '../hooks/useSettings';
 import { codeArenaService, defaultCodeArenaProgress } from '../services/codeArenaService';
 import { reviewService } from '../services/reviewService';
 import { localAnalyticsService } from '../services/localAnalyticsService';
+import { professorByteAi } from '../services/professorByteAi';
 import { CodeArenaProgress } from '../types/codeArena';
 
 export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { challengeId: string; challengeIds?: string[]; goBack: () => void }) {
@@ -26,6 +27,8 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
   const [correctInSession, setCorrectInSession] = useState(0);
   const [earnedInSession, setEarnedInSession] = useState({ xp: 0, coins: 0 });
   const [resolving, setResolving] = useState(false);
+  const [aiHint, setAiHint] = useState('');
+  const [loadingHint, setLoadingHint] = useState(false);
   const currentChallengeId = sessionIds[currentIndex] ?? challengeId;
   const challenge = codeChallengeById(currentChallengeId);
   const hasNextChallenge = currentIndex + 1 < sessionIds.length;
@@ -37,6 +40,8 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
   useEffect(() => {
     setSelected(null);
     setResolving(false);
+    setAiHint('');
+    setLoadingHint(false);
   }, [currentChallengeId]);
 
   if (!challenge) {
@@ -61,7 +66,11 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
       setCorrectInSession((value) => value + 1);
       if (!alreadyCompleted) {
         setEarnedInSession((value) => ({ xp: value.xp + challenge.xpReward, coins: value.coins + challenge.coinReward }));
-        awardCampaignReward(challenge.xpReward, challenge.coinReward, next.medals.includes('Arena Pro') ? ['code-arena-pro'] : []);
+        awardCampaignReward(challenge.xpReward, challenge.coinReward, next.medals.includes('Arena Pro') ? ['code-arena-pro'] : [], {
+          type: 'arena_challenge',
+          xp: challenge.xpReward,
+          language: challenge.areaId
+        });
         localAnalyticsService.recordActivity({ challenge: true, areaId: challenge.areaId, combo: next.combo }).catch(() => undefined);
       }
     } else {
@@ -86,6 +95,28 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
       return;
     }
     setSessionFinished(true);
+  };
+
+  const askHint = async () => {
+    if (!challenge || loadingHint) return;
+    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
+    setLoadingHint(true);
+    try {
+      const result = await professorByteAi.ask('Preciso de uma dica para resolver este desafio de código.', {
+        source: 'arena',
+        aiMode: selected === null ? 'hint' : 'explanation',
+        topic: challenge.title,
+        language: challenge.language,
+        concept: challenge.difficulty,
+        code: challenge.code,
+        options: challenge.options,
+        selectedAnswer: selected === null ? undefined : challenge.options[selected],
+        correctAnswer: selected === null ? undefined : challenge.options[challenge.correctIndex]
+      });
+      setAiHint(result.answer);
+    } finally {
+      setLoadingHint(false);
+    }
   };
 
   if (sessionFinished) {
@@ -114,6 +145,20 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
           <Text style={[styles.subtitle, { color: colors.muted }]}>Desafio {currentIndex + 1} de {sessionIds.length} • {challenge.description}</Text>
         </GameCard>
         <CodeEditorSimulated challenge={challenge} selected={selected} onSelect={choose} />
+        <GameButton
+          title={aiHint ? 'Pedir outra dica ao Byte' : 'Pedir dica ao Byte'}
+          icon="bulb"
+          variant="secondary"
+          onPress={askHint}
+          loading={loadingHint}
+          disabled={loadingHint}
+        />
+        {aiHint || loadingHint ? (
+          <GameCard style={{ borderColor: colors.primary }}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Professor Byte</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>{loadingHint ? 'Professor Byte está pensando...' : aiHint}</Text>
+          </GameCard>
+        ) : null}
         {selected !== null ? (
           <GameCard style={{ borderColor: selected === challenge.correctIndex ? colors.success : colors.danger }}>
             <Text style={[styles.sectionTitle, { color: selected === challenge.correctIndex ? colors.success : colors.danger }]}>

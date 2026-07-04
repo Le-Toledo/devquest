@@ -654,55 +654,64 @@ Sem login ou sem Supabase configurado, a tela mostra o ranking local e nenhuma f
 
 ## Professor Byte com IA
 
-O Professor Byte agora possui uma tela de chat em `src/screens/ProfessorByteScreen.tsx`. Ele funciona hoje em modo mock offline e esta pronto para conectar IA real por backend/serverless.
+O Professor Byte possui uma tela de chat em `src/screens/ProfessorByteScreen.tsx` e dicas contextuais em desafios. A IA real roda pela arquitetura segura:
+
+```txt
+App Expo -> Supabase Edge Function professor-byte-ai -> OpenRouter -> App Expo
+```
+
+O app nunca chama provedores de IA diretamente e nunca recebe `OPENROUTER_API_KEY`.
 
 Arquivos principais:
 
 - `src/types/aiTutor.ts`: mensagens, request, response, contexto e modo
 - `src/services/aiTutorService.ts`: historico local, chamada remota e fallback
+- `src/services/professorByteAi.ts`: chamada segura para `supabase.functions.invoke("professor-byte-ai")`
 - `src/services/aiMockService.ts`: respostas locais simuladas
-- `src/services/promptBuilder.ts`: prompt seguro com contexto educacional
+- `supabase/functions/professor-byte-ai/index.ts`: valida JWT, chama OpenRouter e retorna `{ answer, mode }`
 - `docs/ADR-003-AI-Tutor.md`: decisao arquitetural da IA
 
-### Modo mock
+### Fallback local
 
-Se `EXPO_PUBLIC_AI_TUTOR_ENDPOINT` nao estiver configurado, nao for HTTPS ou falhar, o app usa mock local. A tela mostra o aviso discreto `Modo Professor Byte offline` e continua funcionando sem crash.
+Se o usuario estiver sem sessao, sem internet, com Supabase indisponivel ou com erro no OpenRouter, o app usa fallback local. As respostas antigas simuladas continuam como plano B e a interface mostra aviso discreto sem travar Campanha, Academia, Arena ou chat.
 
-### IA real
+### IA real com OpenRouter
 
-Configure um endpoint HTTPS no `.env`:
+Configure a secret no Supabase. Nunca coloque `OPENROUTER_API_KEY` no `.env` do Expo, `app.json`, `src` ou qualquer arquivo publico do app.
 
-```env
-EXPO_PUBLIC_AI_TUTOR_ENDPOINT=https://seu-backend.com/api/professor-byte
+```bash
+npx supabase secrets set OPENROUTER_API_KEY=SUA_CHAVE_OPENROUTER
+npx supabase functions deploy professor-byte-ai
 ```
 
-Endpoint esperado:
+Payload enviado para a Edge Function:
 
 ```json
 {
-  "message": "Explique meu erro",
-  "prompt": "Prompt completo",
-  "history": [],
-  "context": {
-    "source": "review",
-    "language": "kotlin",
-    "concept": "null safety"
-  }
+  "mode": "hint",
+  "source": "arena",
+  "language": "JavaScript",
+  "level": "iniciante",
+  "question": "Qual alternativa corrige este bug?",
+  "options": ["..."],
+  "userProgress": { "level": 3, "xp": 850, "completedMissions": 12, "streak": 4 }
 }
 ```
 
-Resposta esperada:
+Resposta da função:
 
 ```json
 {
-  "answer": "Texto do Professor Byte"
+  "answer": "Texto do Professor Byte",
+  "mode": "hint"
 }
 ```
 
 ### Seguranca da IA
 
 - Nao coloque chave de IA no aplicativo.
-- Guarde API keys somente no backend/serverless.
+- Guarde `OPENROUTER_API_KEY` somente nas secrets do Supabase.
+- A Edge Function valida JWT do Supabase e rejeita chamadas sem autenticacao.
 - Use rate limit por usuario/IP.
 - Limite tamanho de prompt e resposta.
 - Aplique quotas diarias para controlar custo.

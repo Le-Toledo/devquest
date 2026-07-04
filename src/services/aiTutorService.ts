@@ -2,11 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AiTutorContext, AiTutorMessage, AiTutorResponse } from '../types/aiTutor';
 import { parseArrayOrFallback } from '../utils/jsonStorage';
 import { aiMockService } from './aiMockService';
-import { buildProfessorBytePrompt } from './promptBuilder';
+import { professorByteAi } from './professorByteAi';
 import { storageKeys } from './storageKeys';
+import { isSupabaseConfigured } from './supabaseClient';
 
-const endpoint = process.env.EXPO_PUBLIC_AI_TUTOR_ENDPOINT;
-const isEndpointConfigured = Boolean(endpoint && endpoint.startsWith('https://'));
 const now = () => new Date().toISOString();
 const id = () => `msg-${Date.now()}-${Math.round(Math.random() * 10000)}`;
 
@@ -25,7 +24,7 @@ const assistantMessage = (content: string): AiTutorMessage => ({
 });
 
 export const aiTutorService = {
-  isRemoteConfigured: isEndpointConfigured,
+  isRemoteConfigured: isSupabaseConfigured,
 
   async loadHistory(): Promise<AiTutorMessage[]> {
     const raw = await AsyncStorage.getItem(storageKeys.aiTutorHistory);
@@ -43,38 +42,23 @@ export const aiTutorService = {
   createUserMessage: userMessage,
 
   async ask(input: { message: string; history: AiTutorMessage[]; context?: AiTutorContext }): Promise<AiTutorResponse> {
-    if (!isEndpointConfigured || !endpoint) {
-      return aiMockService.reply({ message: input.message, context: input.context });
-    }
-
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: input.message,
-          prompt: buildProfessorBytePrompt(input.message, input.history, input.context),
-          history: input.history.slice(-8),
-          context: input.context
-        })
-      });
-
-      if (!response.ok) {
-        return aiMockService.reply({ message: input.message, context: input.context });
-      }
-
-      const data = (await response.json()) as { answer?: string; message?: string };
-      const content = data.answer ?? data.message;
-      if (!content) {
-        return aiMockService.reply({ message: input.message, context: input.context });
+      const result = await professorByteAi.ask(input.message, input.context);
+      if (result.mode === 'fallback') {
+        const fallback = await aiMockService.reply({ message: input.message, context: input.context });
+        return {
+          ...fallback,
+          warning: result.warning ?? fallback.warning,
+          message: assistantMessage(fallback.message.content || result.answer)
+        };
       }
 
       return {
         mode: 'remote',
-        message: assistantMessage(content)
+        message: assistantMessage(result.answer)
       };
     } catch {
-      return aiMockService.reply({ message: input.message, context: input.context });
+        return aiMockService.reply({ message: input.message, context: input.context });
     }
   }
 };

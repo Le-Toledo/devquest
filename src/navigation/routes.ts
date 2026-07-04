@@ -8,6 +8,7 @@ export type AppRoute =
   | { name: 'account' }
   | { name: 'premium' }
   | { name: 'dailyReward' }
+  | { name: 'achievements' }
   | { name: 'academy' }
   | { name: 'lesson'; lessonId: string }
   | { name: 'codeArena' }

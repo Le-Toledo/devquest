@@ -5,6 +5,7 @@ export { campaignProgressService } from './campaignProgressService';
 export { codeArenaService } from './codeArenaService';
 export { localAnalyticsService } from './localAnalyticsService';
 export { leaderboardService } from './leaderboardService';
+export { professorByteAi } from './professorByteAi';
 export { reviewService } from './reviewService';
 export { soundService } from './soundService';
 export { storage } from './storage';

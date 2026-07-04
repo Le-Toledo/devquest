@@ -43,17 +43,21 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
   const send = async (text = input) => {
     const content = text.trim();
     if (!content || loading) return;
+    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
     setInput('');
     setLoading(true);
     const userMessage = aiTutorService.createUserMessage(content);
     const withUser = [...messages, userMessage];
     setMessages(withUser);
-    const response = await aiTutorService.ask({ message: content, history: messages, context });
-    const next = [...withUser, response.message];
-    setMode(response.mode);
-    setWarning(response.warning ?? '');
-    await persist(next);
-    setLoading(false);
+    try {
+      const response = await aiTutorService.ask({ message: content, history: messages, context });
+      const next = [...withUser, response.message];
+      setMode(response.mode);
+      setWarning(response.warning ?? '');
+      await persist(next);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const clear = async () => {
@@ -84,7 +88,7 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestions}>
             {suggestions.map((item) => (
-              <GameButton key={item} title={item} variant="secondary" onPress={() => send(item)} style={styles.suggestionButton} />
+              <GameButton key={item} title={item} variant="secondary" onPress={() => send(item)} disabled={loading} style={styles.suggestionButton} />
             ))}
           </ScrollView>
 
@@ -111,8 +115,8 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
               style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceSoft }]}
             />
             <View style={styles.actions}>
-              <GameButton title="Enviar" icon="send" onPress={() => send()} loading={loading} disabled={!input.trim()} style={styles.actionButton} />
-              <GameButton title="Limpar" icon="trash" variant="secondary" onPress={clear} style={styles.actionButton} />
+              <GameButton title="Enviar" icon="send" onPress={() => send()} loading={loading} disabled={!input.trim() || loading} style={styles.actionButton} />
+              <GameButton title="Limpar" icon="trash" variant="secondary" onPress={clear} disabled={loading} style={styles.actionButton} />
             </View>
           </GameCard>
         </ScrollView>

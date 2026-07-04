@@ -13,11 +13,11 @@ CodeQuest Academy nasceu como app offline com AsyncStorage. A evolucao para prod
 - Usar Supabase com `@supabase/supabase-js` e `react-native-url-polyfill`, mantendo compatibilidade com Expo Go.
 - Configurar apenas `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` no app.
 - Manter AsyncStorage como fonte local e fallback offline.
-- Sincronizar manualmente pela tela Conta e automaticamente uma vez ao abrir Conta apos login.
-- Resolver conflito por heuristica simples de "melhor progresso": XP, missoes, aulas e desafios concluidos.
-- Salvar progresso completo em `cloud_progress.progress` como `jsonb` para preservar flexibilidade inicial.
+- Sincronizar automaticamente apos login e sempre que o progresso local relevante mudar, mantendo fallback local quando a nuvem falhar.
+- Resolver conflito comparando `updated_at` remoto com o estado local salvo para evitar sobrescrever progresso mais novo.
+- Salvar progresso completo em `player_progress.progress` como `jsonb`, junto de XP, moedas, nivel, streak, conquistas e configuracoes.
 - Publicar ranking com dados minimos: nome exibido, avatar, XP, nivel, linguagem favorita, periodo e data de atualizacao.
-- Proteger `profiles` e `cloud_progress` com RLS por dono.
+- Proteger `profiles` e `player_progress` com RLS por dono.
 - Permitir leitura publica do ranking, mas restringir permissao de SELECT as colunas publicas.
 
 ## Consequences
@@ -28,6 +28,6 @@ O app continua funcionando sem Supabase configurado. A anon key e publica por na
 
 - Adicionar recuperacao de senha.
 - Criar exclusao de conta e exportacao de dados.
-- Evoluir sync automatico em background quando houver eventos de estudo.
+- Evoluir sync automatico em background com fila offline para multiplos dispositivos ativos.
 - Criar ranking semanal real com janelas por data no backend.
 - Substituir `jsonb` amplo por tabelas normalizadas se analytics, IA ou multiplayer precisarem de consultas detalhadas.

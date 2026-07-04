@@ -8,6 +8,7 @@ import { questions } from '../data/questions';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
 import { mentorMissionService } from '../services/mentorMissionService';
+import { professorByteAi } from '../services/professorByteAi';
 import { questionSelectionService } from '../services/questionSelectionService';
 import { reviewService } from '../services/reviewService';
 import { CampaignMission } from '../types/campaign';
@@ -38,6 +39,8 @@ export function CampaignMissionScreen({
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [aiHelp, setAiHelp] = useState('');
+  const [loadingHelp, setLoadingHelp] = useState(false);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [finishing, setFinishing] = useState(false);
   const current = missionQuestions[index];
@@ -51,6 +54,8 @@ export function CampaignMissionScreen({
     setIndex(0);
     setSelected(null);
     setShowHelp(false);
+    setAiHelp('');
+    setLoadingHelp(false);
     setAnswers([]);
     setFinishing(false);
 
@@ -81,6 +86,29 @@ export function CampaignMissionScreen({
     setAnswers((value) => [...value, { question: current, selectedIndex: optionIndex, correct }]);
   };
 
+  const askByteHint = async () => {
+    if (!current || loadingHelp) return;
+    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
+    setShowHelp(true);
+    setLoadingHelp(true);
+    try {
+      const result = await professorByteAi.ask('Preciso de uma dica para esta pergunta.', {
+        source: 'campaign',
+        aiMode: selected === null ? 'hint' : 'explanation',
+        topic: current.prompt,
+        language: current.areaId,
+        concept: current.difficulty,
+        code: current.code,
+        options: current.options,
+        selectedAnswer: selected === null ? undefined : current.options[selected],
+        correctAnswer: selected === null ? undefined : current.options[current.correctIndex]
+      });
+      setAiHelp(result.answer);
+    } finally {
+      setLoadingHelp(false);
+    }
+  };
+
   const next = () => {
     if (finishing) return;
     if (index + 1 >= missionQuestions.length) {
@@ -91,6 +119,8 @@ export function CampaignMissionScreen({
     setIndex((value) => value + 1);
     setSelected(null);
     setShowHelp(false);
+    setAiHelp('');
+    setLoadingHelp(false);
   };
 
   if (loadingQuestions) {
@@ -162,13 +192,15 @@ export function CampaignMissionScreen({
           <Text style={[styles.questionCount, { color: colors.muted }]}>Pergunta {index + 1} de {missionQuestions.length} • {current.points} pontos</Text>
           <Text style={[styles.prompt, { color: colors.text }]}>{current.prompt}</Text>
           {current.code ? <Text style={[styles.code, { backgroundColor: colors.surfaceSoft, color: colors.text }]}>{current.code}</Text> : null}
-          <GameButton title="Pedir ajuda ao Byte" icon="bulb" variant="secondary" onPress={() => setShowHelp(true)} />
+          <GameButton title="Pedir ajuda ao Byte" icon="bulb" variant="secondary" onPress={askByteHint} loading={loadingHelp} disabled={loadingHelp} />
         </GameCard>
 
         {showHelp ? (
           <GameCard style={{ borderColor: colors.primary }}>
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>Professor Byte</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>{selected === null ? tone.mid : current.hint}</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>
+              {loadingHelp ? 'Professor Byte está pensando...' : aiHelp || (selected === null ? tone.mid : current.hint)}
+            </Text>
           </GameCard>
         ) : null}
 

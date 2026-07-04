@@ -11,6 +11,7 @@ import { useSettings } from '../hooks/useSettings';
 import { Navigate } from '../navigation/routes';
 import { reviewService } from '../services/reviewService';
 import { questionSelectionService } from '../services/questionSelectionService';
+import { professorByteAi } from '../services/professorByteAi';
 import { Question, Stage } from '../types/game';
 
 type Answer = { question: Question; correct: boolean };
@@ -26,6 +27,8 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [hintText, setHintText] = useState('');
+  const [loadingHint, setLoadingHint] = useState(false);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [combo, setCombo] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -40,6 +43,8 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
     setIndex(0);
     setSelected(null);
     setShowHint(false);
+    setHintText('');
+    setLoadingHint(false);
     setAnswers([]);
     setCombo(0);
     setFinished(false);
@@ -100,6 +105,27 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
     setAnswers((value) => [...value, { question: current, correct }]);
   };
 
+  const askHint = async () => {
+    if (!current || loadingHint) return;
+    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
+    setShowHint(true);
+    setLoadingHint(true);
+    try {
+      const result = await professorByteAi.ask('Preciso de uma dica para esta pergunta.', {
+        source: 'campaign',
+        aiMode: 'hint',
+        topic: current.prompt,
+        language: current.areaId,
+        concept: current.difficulty,
+        code: current.code,
+        options: current.options
+      });
+      setHintText(result.answer);
+    } finally {
+      setLoadingHint(false);
+    }
+  };
+
   const next = () => {
     if (index + 1 >= stageQuestions.length) {
       if (!stageSaved) {
@@ -113,6 +139,8 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
     setIndex((value) => value + 1);
     setSelected(null);
     setShowHint(false);
+    setHintText('');
+    setLoadingHint(false);
   };
 
   if (finished) {
@@ -145,8 +173,24 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
           <Text style={[styles.questionCount, { color: colors.muted }]}>Desafio {index + 1} de {stageQuestions.length} • {current.points} pontos</Text>
           <Text style={[styles.prompt, { color: colors.text }]}>{current.prompt}</Text>
           {current.code ? <Text style={[styles.code, { backgroundColor: colors.surfaceSoft, color: colors.text }]}>{current.code}</Text> : null}
-          <GameButton title={showHint ? current.hint : 'Mostrar dica'} icon="bulb" variant="secondary" onPress={() => setShowHint(true)} />
+          <GameButton
+            title={showHint ? 'Pedir outra dica' : 'Mostrar dica'}
+            icon="bulb"
+            variant="secondary"
+            onPress={askHint}
+            loading={loadingHint}
+            disabled={loadingHint}
+          />
         </GameCard>
+
+        {showHint ? (
+          <GameCard style={{ borderColor: colors.primary }}>
+            <Text style={[styles.feedbackTitle, { color: colors.primary }]}>Professor Byte</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>
+              {loadingHint ? 'Professor Byte está pensando...' : hintText || current.hint}
+            </Text>
+          </GameCard>
+        ) : null}
 
         <View style={styles.options}>
           {current.options.map((option, optionIndex) => {

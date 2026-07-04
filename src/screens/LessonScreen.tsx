@@ -83,7 +83,7 @@ export function LessonScreen({ lessonId, navigate, goBack }: { lessonId: string;
       if (lesson.pathId === 'backend-path' || lesson.pathId === 'frontend-path') achievements.push('academy-fullstack-training');
       if (lesson.pathId === 'kotlin-path') achievements.push('academy-kotlin-scholar');
       if (lesson.pathId === 'git-path') achievements.push('academy-git-guardian');
-      if (!alreadyCompleted) awardCampaignReward(lesson.xpReward, lesson.coinReward, achievements);
+      if (!alreadyCompleted) awardCampaignReward(lesson.xpReward, lesson.coinReward, achievements, { type: 'academy_lesson', xp: lesson.xpReward, language: lesson.areaId });
       if (!alreadyCompleted) {
         localAnalyticsService.recordActivity({ lesson: true, minutes: lesson.estimatedMinutes, areaId: lesson.areaId }).catch(() => undefined);
       }

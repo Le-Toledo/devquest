@@ -9,10 +9,12 @@ export interface AiTutorMessage {
 
 export interface AiTutorContext {
   source?: 'general' | 'review' | 'arena' | 'academy' | 'campaign';
+  aiMode?: 'hint' | 'explanation' | 'concept' | 'error_help';
   topic?: string;
   language?: string;
   concept?: string;
   code?: string;
+  options?: string[];
   errorPrompt?: string;
   selectedAnswer?: string;
   correctAnswer?: string;

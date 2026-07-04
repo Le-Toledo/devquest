@@ -13,7 +13,7 @@ Validar o app como MVP premium antes de abrir beta externo. Testar em Android re
 - Rodar `npx expo-doctor`.
 - Subir `npx expo start --localhost`.
 - Testar com Supabase configurado e sem Supabase configurado.
-- Testar com `EXPO_PUBLIC_AI_TUTOR_ENDPOINT` vazio para validar mock do Professor Byte.
+- Testar Professor Byte com `OPENROUTER_API_KEY` configurada no Supabase e, em caso de falha proposital do provedor, validar fallback local.
 
 ## Fluxo Completo
 
@@ -45,7 +45,7 @@ Validar o app como MVP premium antes de abrir beta externo. Testar em Android re
 - Fazer login.
 - Abrir Conta e confirmar sync automatico.
 - Tocar em `Sincronizar agora`.
-- Conferir `profiles`, `cloud_progress` e `leaderboard_entries` no Supabase.
+- Conferir `player_progress` e `leaderboard_entries` no Supabase.
 - Fazer logout.
 - Entrar novamente e validar sessao.
 
