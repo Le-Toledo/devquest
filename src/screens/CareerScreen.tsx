@@ -16,7 +16,7 @@ export function CareerScreen({ navigate, goBack }: { navigate: Navigate; goBack:
       <ScrollView contentContainerStyle={styles.container}>
         <GameButton title="Voltar" icon="chevron-back" variant="ghost" onPress={goBack} />
         <Text style={[styles.title, { color: colors.text }]}>Carreira Dev</Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>Git, APIs, banco de dados, front-end, back-end, entrevistas, portfolio e plano de estudo.</Text>
+        <Text style={[styles.subtitle, { color: colors.muted }]}>Git, APIs, banco de dados, front-end, back-end, entrevistas, portfólio e plano de estudo.</Text>
         <GameButton title="Desafio profissional" icon="briefcase" onPress={() => navigate({ name: 'quiz', stage: proStage })} />
         {careerTips.map((tip) => (
           <GameCard key={tip.id}>

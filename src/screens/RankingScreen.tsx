@@ -31,7 +31,7 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
         setEntries(result.entries);
         setError(result.error ?? '');
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Nao foi possivel carregar o ranking online.'))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Não foi possível carregar o ranking online.'))
       .finally(() => setLoading(false));
   }, [onlineEnabled, period]);
 
@@ -41,7 +41,7 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
         <GameButton title="Voltar" icon="chevron-back" variant="ghost" onPress={goBack} />
         <Text style={[styles.title, { color: colors.text }]}>{onlineEnabled ? 'Ranking online' : 'Ranking local'}</Text>
         <Text style={[styles.subtitle, { color: colors.muted }]}>
-          {onlineEnabled ? 'Dados globais vindos do Supabase. Sincronize sua conta para atualizar sua posicao.' : 'Entre na conta para ativar ranking global. Este ranking continua disponivel offline.'}
+          {onlineEnabled ? 'Dados globais vindos do Supabase. Sincronize sua conta para atualizar sua posição.' : 'Entre na conta para ativar ranking global. Este ranking continua disponível offline.'}
         </Text>
 
         {onlineEnabled ? (
@@ -60,7 +60,7 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
 
         {error ? (
           <GameCard style={{ borderColor: colors.warning }}>
-            <Text style={[styles.name, { color: colors.text }]}>Ranking online indisponivel</Text>
+            <Text style={[styles.name, { color: colors.text }]}>Ranking online indisponível</Text>
             <Text style={[styles.meta, { color: colors.muted }]}>{error}</Text>
           </GameCard>
         ) : null}
@@ -98,7 +98,7 @@ function RankingCard({ place, avatar, name, xp, level }: { place: number; avatar
         </View>
         <View style={styles.info}>
           <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
-          <Text style={[styles.meta, { color: colors.muted }]}>{xp} XP acumulado{level ? ` • Nivel ${level}` : ''}</Text>
+          <Text style={[styles.meta, { color: colors.muted }]}>{xp} XP acumulado{level ? ` • Nível ${level}` : ''}</Text>
         </View>
       </View>
     </GameCard>

@@ -29,7 +29,7 @@ export function RegisterScreen({ goBack, openLogin, openAccount }: Props) {
       setMessage(result.error);
       return;
     }
-    setMessage('Conta criada. Se o Supabase exigir confirmacao, confira seu email antes de entrar.');
+    setMessage('Conta criada. Se o Supabase exigir confirmação, confira seu e-mail antes de entrar.');
     openAccount();
   };
 
@@ -44,7 +44,7 @@ export function RegisterScreen({ goBack, openLogin, openAccount }: Props) {
           {!configured ? (
             <GameCard style={{ borderColor: colors.warning }}>
               <Text style={[styles.cardTitle, { color: colors.text }]}>Modo offline ativo</Text>
-              <Text style={[styles.copy, { color: colors.muted }]}>Cadastro fica indisponivel ate a nuvem ser configurada. Seus saves locais continuam protegidos no aparelho.</Text>
+              <Text style={[styles.copy, { color: colors.muted }]}>Cadastro fica indisponível até a nuvem ser configurada. Seus saves locais continuam protegidos no aparelho.</Text>
             </GameCard>
           ) : (
             <GameCard>
@@ -54,7 +54,7 @@ export function RegisterScreen({ goBack, openLogin, openAccount }: Props) {
                   autoComplete="email"
                   keyboardType="email-address"
                   placeholder="email@exemplo.com"
-                  accessibilityLabel="Email"
+                  accessibilityLabel="E-mail"
                   placeholderTextColor={colors.muted}
                   value={email}
                   onChangeText={setEmail}
@@ -73,7 +73,7 @@ export function RegisterScreen({ goBack, openLogin, openAccount }: Props) {
                 />
                 {message ? <Text style={[styles.message, { color: message.includes('criada') ? colors.success : colors.danger }]}>{message}</Text> : null}
                 <GameButton title="Criar minha conta" icon="person-add" onPress={submit} loading={submitting} disabled={!email || password.length < 6} />
-                <GameButton title="Ja tenho conta" icon="log-in" variant="secondary" onPress={openLogin} />
+                <GameButton title="Já tenho conta" icon="log-in" variant="secondary" onPress={openLogin} />
               </View>
             </GameCard>
           )}

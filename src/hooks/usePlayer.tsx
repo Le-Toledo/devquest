@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { shopItems } from '../data/shop';
 import { stages } from '../data/worlds';
-import { defaultPlayer, storage } from '../services/storage';
+import { createDefaultPlayer, storage } from '../services/storage';
 import { streakService } from '../services/streakService';
 import { AreaId, PlayerProfile, Question, ShopItem } from '../types/game';
 import { calculateLevel, starsForScore } from '../utils/progression';
@@ -22,13 +22,14 @@ type PlayerContextValue = {
   completeStage: (payload: CompleteStagePayload) => void;
   buyItem: (item: ShopItem) => boolean;
   awardCampaignReward: (xp: number, coins: number, achievements?: string[]) => void;
-  resetProgress: () => void;
+  resetProgress: () => Promise<void>;
+  reloadProfile: () => Promise<PlayerProfile>;
 };
 
 const PlayerContext = createContext<PlayerContextValue | undefined>(undefined);
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<PlayerProfile>(defaultPlayer);
+  const [profile, setProfile] = useState<PlayerProfile>(createDefaultPlayer());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -136,12 +137,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const resetProgress = () => {
-    storage.reset().catch(() => undefined);
-    setProfile(defaultPlayer);
+  const resetProgress = async () => {
+    await storage.resetProgress();
+    setProfile(createDefaultPlayer());
   };
 
-  const value = { profile, loading, updateName, updateAvatar, claimDailyReward, completeStage, buyItem, awardCampaignReward, resetProgress };
+  const reloadProfile = async () => {
+    const next = await storage.loadPlayer();
+    setProfile(next);
+    return next;
+  };
+
+  const value = { profile, loading, updateName, updateAvatar, claimDailyReward, completeStage, buyItem, awardCampaignReward, resetProgress, reloadProfile };
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }

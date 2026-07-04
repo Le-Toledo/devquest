@@ -18,10 +18,30 @@ export const defaultPlayer: PlayerProfile = {
   answerHistory: []
 };
 
+export const createDefaultPlayer = (): PlayerProfile => ({
+  ...defaultPlayer,
+  unlockedAreaIds: [...defaultPlayer.unlockedAreaIds],
+  completedStages: {},
+  achievements: [],
+  ownedItems: [...defaultPlayer.ownedItems],
+  answerHistory: []
+});
+
+const progressStorageKeys = [
+  storageKeys.academyProgress,
+  storageKeys.campaignProgress,
+  storageKeys.codeArena,
+  storageKeys.localAnalytics,
+  storageKeys.player,
+  storageKeys.questionSeenHistory,
+  storageKeys.reviewErrors,
+  storageKeys.streak
+];
+
 export const storage = {
   async loadPlayer(): Promise<PlayerProfile> {
     const raw = await AsyncStorage.getItem(storageKeys.player);
-    return parseJsonOrFallback(raw, defaultPlayer);
+    return parseJsonOrFallback(raw, createDefaultPlayer());
   },
   async savePlayer(profile: PlayerProfile) {
     await AsyncStorage.setItem(storageKeys.player, JSON.stringify(profile));
@@ -35,7 +55,7 @@ export const storage = {
   async saveTheme(theme: ThemeMode) {
     await AsyncStorage.setItem(storageKeys.settings, JSON.stringify({ theme }));
   },
-  async reset() {
-    await AsyncStorage.multiRemove([storageKeys.player, storageKeys.settings]);
+  async resetProgress() {
+    await AsyncStorage.multiRemove(progressStorageKeys);
   }
 };

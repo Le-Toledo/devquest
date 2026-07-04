@@ -25,7 +25,7 @@ const mapEntry = (row: {
 
 export const leaderboardService = {
   async list(period: LeaderboardPeriod, favoriteLanguage?: string): Promise<{ entries: LeaderboardEntry[]; error?: string; disabled?: boolean }> {
-    if (!supabase) return { entries: [], disabled: true, error: 'Supabase nao configurado.' };
+    if (!supabase) return { entries: [], disabled: true, error: 'Supabase não configurado.' };
 
     let query = supabase
       .from('leaderboard_entries')

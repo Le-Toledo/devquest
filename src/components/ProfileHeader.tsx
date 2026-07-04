@@ -14,7 +14,7 @@ export function ProfileHeader() {
       </View>
       <View style={styles.info}>
         <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{profile.name}</Text>
-        <Text style={[styles.meta, { color: colors.muted }]}>Nivel {profile.level} • {profile.xp} XP • {profile.coins} moedas</Text>
+        <Text style={[styles.meta, { color: colors.muted }]}>Nível {profile.level} • {profile.xp} XP • {profile.coins} moedas</Text>
         <ProgressBar value={progressToNextLevel(profile)} />
       </View>
     </View>

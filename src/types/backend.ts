@@ -1,10 +1,11 @@
 import { Session, User } from '@supabase/supabase-js';
-import { PlayerProfile } from './game';
+import { PlayerProfile, ThemeMode } from './game';
 import { AcademyProgress } from './academy';
 import { CampaignProgress } from './campaign';
 import { CodeArenaProgress } from './codeArena';
 import { ReviewError } from './review';
 import { StreakState } from '../services/streakService';
+import { LocalAnalytics } from '../services/localAnalyticsService';
 
 export type AuthSession = Session;
 export type AuthUser = User;
@@ -27,6 +28,10 @@ export interface CloudProgress {
   arena?: CodeArenaProgress;
   reviewErrors?: ReviewError[];
   streak?: StreakState;
+  localAnalytics?: LocalAnalytics;
+  settings?: {
+    theme: ThemeMode;
+  };
   future?: Record<string, never>;
   updatedAt: string;
 }

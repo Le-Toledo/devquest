@@ -66,7 +66,7 @@ export function AcademyScreen({ navigate, goBack }: { navigate: Navigate; goBack
             <Text style={[styles.kicker, { color: selectedPath?.color ?? colors.primary }]}>Academia Dev</Text>
             <Text style={[styles.title, { color: colors.text }]}>{selectedPath?.title ?? 'Escolha sua proxima aula.'}</Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>
-              {selectedPath?.description ?? `${stats.completedLessons}/${stats.totalLessons} aulas concluidas • ${stats.totalMinutesStudied} min estudados • 17 trilhas guiadas para estudar de verdade`}
+              {selectedPath?.description ?? `${stats.completedLessons}/${stats.totalLessons} aulas concluídas • ${stats.totalMinutesStudied} min estudados • 17 trilhas guiadas para estudar de verdade`}
             </Text>
           </View>
         </View>

@@ -51,7 +51,7 @@ export function AccountScreen({ goBack, openLogin }: Props) {
 
   const logout = async () => {
     const response = await signOut();
-    setResult(response.error ? { status: 'error', message: response.error } : { status: 'idle', message: 'Voce saiu da conta com seguranca.' });
+    if (response.error) setResult({ status: 'error', message: response.error });
   };
 
   const statusText = result?.message ?? (user ? 'Pronto para sincronizar.' : 'Entre para salvar progresso na nuvem.');
@@ -61,12 +61,12 @@ export function AccountScreen({ goBack, openLogin }: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         <GameButton title="Voltar" icon="chevron-back" variant="ghost" onPress={goBack} />
         <Text style={[styles.title, { color: colors.text }]}>Conta e progresso</Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>Seu save nasce offline, fica seguro no aparelho e pode ganhar backup quando voce entrar.</Text>
+        <Text style={[styles.subtitle, { color: colors.muted }]}>Seu save nasce offline, fica seguro no aparelho e pode ganhar backup quando você entrar.</Text>
 
         {!configured ? (
           <GameCard style={{ borderColor: colors.warning }}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>Nuvem em modo de preparo</Text>
-            <Text style={[styles.copy, { color: colors.muted }]}>Login e sync aparecem quando as variaveis publicas do Supabase forem configuradas. Ate la, nada do progresso local e perdido.</Text>
+            <Text style={[styles.copy, { color: colors.muted }]}>Login e sync aparecem quando as variáveis públicas do Supabase forem configuradas. Até lá, nada do progresso local é perdido.</Text>
           </GameCard>
         ) : null}
 
@@ -76,12 +76,12 @@ export function AccountScreen({ goBack, openLogin }: Props) {
               <View style={[styles.statusDot, { backgroundColor: user ? colors.success : colors.warning }]} />
             </View>
             <View style={styles.info}>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>{user ? 'Progresso sincronizavel' : 'Salvar progresso na nuvem'}</Text>
-              <Text style={[styles.copy, { color: colors.muted }]}>{user?.email ?? 'Login necessario para backup e ranking online.'}</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>{user ? 'Progresso sincronizável' : 'Salvar progresso na nuvem'}</Text>
+              <Text style={[styles.copy, { color: colors.muted }]}>{user?.email ?? 'Login necessário para backup e ranking online.'}</Text>
             </View>
           </View>
           <Text style={[styles.status, { color: result?.status === 'error' ? colors.danger : colors.primary }]}>{statusText}</Text>
-          {result?.lastSyncAt ? <Text style={[styles.copy, { color: colors.muted }]}>Ultimo sync: {new Date(result.lastSyncAt).toLocaleString()}</Text> : null}
+          {result?.lastSyncAt ? <Text style={[styles.copy, { color: colors.muted }]}>Última sincronização: {new Date(result.lastSyncAt).toLocaleString()}</Text> : null}
           <View style={styles.actions}>
             {user ? (
               <>
@@ -98,13 +98,13 @@ export function AccountScreen({ goBack, openLogin }: Props) {
           <Text style={[styles.cardTitle, { color: colors.text }]}>Resumo local</Text>
           <View style={styles.grid}>
             <Metric label="XP" value={profile.xp} />
-            <Metric label="Nivel" value={profile.level} />
+            <Metric label="Nível" value={profile.level} />
             <Metric label="Moedas" value={profile.coins} />
             <Metric label="Streak" value={localProgress?.streak?.currentStreak ?? profile.streak} />
-            <Metric label="Missoes" value={localProgress?.campaign?.completedMissionIds.length ?? 0} />
+            <Metric label="Missões" value={localProgress?.campaign?.completedMissionIds.length ?? 0} />
             <Metric label="Aulas" value={localProgress?.academy?.completedLessonIds.length ?? 0} />
             <Metric label="Arena" value={localProgress?.arena?.completedChallengeIds.length ?? 0} />
-            <Metric label="Revisoes" value={localProgress?.reviewErrors?.length ?? 0} />
+            <Metric label="Revisões" value={localProgress?.reviewErrors?.length ?? 0} />
           </View>
         </GameCard>
       </ScrollView>

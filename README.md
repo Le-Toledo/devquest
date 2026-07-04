@@ -536,8 +536,8 @@ Arquivos principais:
 - `src/services/syncService.ts`: sync local para nuvem com estrategia de melhor progresso
 - `src/services/leaderboardService.ts`: ranking global, semanal e filtro por linguagem favorita
 - `src/types/backend.ts`: contratos de perfil, progresso, ranking e status de sync
-- `src/screens/LoginScreen.tsx`: login com email/senha
-- `src/screens/RegisterScreen.tsx`: cadastro com email/senha
+- `src/screens/LoginScreen.tsx`: tela unica de autenticacao com login, cadastro e recuperacao
+- `src/screens/RegisterScreen.tsx`: tela legada mantida por compatibilidade interna
 - `src/screens/AccountScreen.tsx`: status da nuvem, sync manual e resumo local
 - `docs/supabase-schema.sql`: schema SQL com RLS e permissao publica minima do ranking
 - `docs/ADR-002-Supabase.md`: decisao arquitetural do backend local-first
@@ -547,22 +547,73 @@ Arquivos principais:
 1. Crie um projeto em Supabase.
 2. Abra o SQL Editor.
 3. Rode o conteudo de `docs/supabase-schema.sql`.
-4. Copie a Project URL e a anon public key.
+4. Copie a Project URL e a anon public key. O app tambem aceita a publishable key nova do Supabase (`sb_publishable_...`).
 5. Crie um arquivo `.env` local baseado em `.env.example`:
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-public-anon-key
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-Essas variaveis usam o prefixo `EXPO_PUBLIC_` porque rodam no app Expo. Nao coloque service role key, JWT secret, database password ou qualquer chave secreta no codigo. Se o `.env` estiver ausente ou ainda com placeholders, o app entra em modo offline seguro.
+Essas variaveis usam o prefixo `EXPO_PUBLIC_` porque rodam no app Expo. Nao coloque service role key, JWT secret, database password ou qualquer chave secreta no codigo. Se o `.env` estiver ausente ou ainda com placeholders, a tela de Entrar/Criar conta continua visivel, mas as acoes mostram erro amigavel e o Hub nao abre sem sessao real.
+
+Valide a configuracao local sem imprimir segredo:
+
+```bash
+npm run check:supabase
+```
+
+Depois de alterar `.env`, reinicie o Expo limpando o cache para o bundle reler as variaveis:
+
+```bash
+npx expo start -c
+```
+
+### Autenticacao real
+
+- Sem sessao Supabase valida, o app mostra a tela unica de `Entrar` e `Criar conta`.
+- `signUp`, `signIn`, `signOut` e recuperacao de senha usam Supabase Auth real.
+- O Hub so abre quando `supabase.auth.signInWithPassword` ou `supabase.auth.signUp` retornar uma sessao valida.
+- Se o Supabase exigir confirmacao de email, o cadastro mostra a mensagem de confirmacao e nao entra no Hub ate existir sessao.
+- `Dev Explorer` e progresso local sao apenas fallback visual/local; nao contam como usuario autenticado.
+
+### EAS/TestFlight
+
+O arquivo `eas.json` possui perfis `development`, `preview` e `production`. Para TestFlight, configure as mesmas variaveis no ambiente `production` do EAS antes do build.
+
+Pelo EAS CLI atual, use ambientes:
+
+```bash
+eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value "URL_DO_SUPABASE" --visibility plain
+eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "ANON_KEY_OU_PUBLISHABLE_KEY_PUBLICA" --visibility sensitive
+```
+
+Se sua versao do EAS CLI ainda usa secrets por projeto, o equivalente e:
+
+```bash
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "URL_DO_SUPABASE"
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "ANON_KEY_OU_PUBLISHABLE_KEY_PUBLICA"
+```
+
+Build iOS para TestFlight:
+
+```bash
+eas build --platform ios --profile production
+eas submit --platform ios --profile production
+```
+
+Nao coloque `service_role_key` no EAS, no `.env`, no `app.json` ou no codigo. O app mobile deve usar somente chave publica anon/publishable com RLS ligado no Supabase.
 
 ### Como testar login
 
-1. Rode `npx expo start`.
-2. Abra `Salvar nuvem` ou `Conta` pela Home.
-3. Crie uma conta com email/senha.
-4. Entre na conta e confirme que o email aparece na tela `Conta e nuvem`.
+1. Rode `npm run check:supabase`.
+2. Rode `npx expo start -c`.
+3. Abra o app sem sessao.
+4. Crie uma conta com nome, email, senha e confirmacao.
+5. Se o Supabase criar sessao automaticamente, o Hub abre.
+6. Se o Supabase exigir confirmacao de email, confirme o email e faca login.
+7. Confira o usuario em Supabase Auth.
+8. Faca logout e entre novamente com o mesmo email/senha.
 
 Se o Supabase estiver configurado para exigir confirmacao de email, confirme o email antes de tentar login.
 
@@ -572,9 +623,9 @@ Se o Supabase estiver configurado para exigir confirmacao de email, confirme o e
 2. Abra `Conta e nuvem`.
 3. Ao entrar na conta, a tela executa um sync automatico uma vez por usuario.
 4. Toque em `Sincronizar agora` para forcar uma nova sincronizacao manual.
-5. Confira as tabelas `profiles`, `cloud_progress` e `leaderboard_entries` no Supabase.
+5. Confira a tabela `public.player_progress` no Supabase.
 
-A estrategia atual compara progresso local e cloud por XP, missoes, aulas e desafios concluidos. O app evita sobrescrever um progresso melhor por um pior, salva o resultado em AsyncStorage e usa `updatedAt` para auditoria simples.
+A estrategia atual compara `updated_at` remoto com o estado local salvo, carrega o progresso remoto mais recente no login, cria registro inicial quando necessario e faz `upsert` em `public.player_progress` apos mudancas de XP, moedas, nivel, progresso, streak, conquistas e configuracoes.
 
 ### Como testar ranking online
 
@@ -588,17 +639,17 @@ Sem login ou sem Supabase configurado, a tela mostra o ranking local e nenhuma f
 ### Seguranca Supabase
 
 - `profiles`: leitura, insert e update apenas pelo dono.
-- `cloud_progress`: leitura, insert e update apenas pelo dono.
+- `player_progress`: leitura, insert e update apenas pelo dono.
 - `leaderboard_entries`: leitura publica apenas das colunas de ranking.
 - `leaderboard_entries`: insert/update apenas da propria entrada do usuario autenticado.
 - O app usa somente anon key publica. Nenhuma service role key deve ir para Expo.
 
 ### Limitacoes atuais
 
-- Sync automatico acontece ao abrir Conta apos login; outros eventos usam sync manual nesta base inicial.
-- Conflito usa heuristica simples de melhor progresso, nao merge campo a campo completo.
+- Sync automatico acontece apos login e tambem quando o progresso local muda.
+- Conflito evita sobrescrever progresso remoto mais novo com estado local antigo usando `updated_at`.
 - Ranking semanal usa a mesma pontuacao atual, pronto para evoluir com janelas reais no backend.
-- Recuperacao de senha, login social e exclusao de conta ainda nao foram implementados.
+- Login social e exclusao de conta ainda nao foram implementados. Recuperacao de senha usa Supabase Auth quando a nuvem esta configurada.
 - A anon key e publica por natureza; RLS protege as tabelas sensiveis.
 
 ## Professor Byte com IA

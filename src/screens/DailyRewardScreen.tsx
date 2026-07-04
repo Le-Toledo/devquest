@@ -23,8 +23,8 @@ export function DailyRewardScreen({ goBack }: { goBack: () => void }) {
       <ScrollView contentContainerStyle={styles.container}>
         <GameCard style={{ borderColor: colors.accent }}>
           <Text style={[styles.kicker, { color: colors.accent }]}>Recompensa diaria</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Voltar tambem e treinar.</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Receba moedas e XP por manter consistencia. Se ficar sem estudar, o streak recomeca.</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Voltar também é treinar.</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>Receba moedas e XP por manter consistência. Se ficar sem estudar, a sequência recomeça.</Text>
           <Text style={[styles.reward, { color: colors.primary }]}>+80 XP • +120 moedas</Text>
         </GameCard>
         <GameButton title="Coletar recompensa" icon="gift" onPress={claim} />

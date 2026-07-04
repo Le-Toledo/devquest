@@ -22,7 +22,7 @@ export function LearningPathCard({ path, progress, onOpen }: { path: LearningPat
         </View>
         <View style={styles.info}>
           <Text style={[styles.title, { color: colors.text }]}>{path.title}</Text>
-          <Text style={[styles.meta, { color: colors.muted }]}>Nivel recomendado {path.recommendedLevel} • {completed}/{lessons.length} aulas</Text>
+          <Text style={[styles.meta, { color: colors.muted }]}>Nível recomendado {path.recommendedLevel} • {completed}/{lessons.length} aulas</Text>
           <Text style={[styles.description, { color: colors.muted }]}>{path.description}</Text>
         </View>
       </View>

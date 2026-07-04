@@ -42,7 +42,7 @@ export function CodeArenaScreen({ navigate, goBack }: { navigate: Navigate; goBa
     navigate({
       name: 'professorByte',
       initialPrompt: language === 'Todas' ? 'Crie um desafio de JavaScript' : `Crie um desafio de ${language}`,
-      context: { source: 'arena', topic: 'Arena de Codigo', language: language === 'Todas' ? undefined : language, concept: level === 'todos' ? undefined : level },
+      context: { source: 'arena', topic: 'Arena de Código', language: language === 'Todas' ? undefined : language, concept: level === 'todos' ? undefined : level },
       returnTo: { name: 'codeArena' }
     });
 
@@ -60,10 +60,10 @@ export function CodeArenaScreen({ navigate, goBack }: { navigate: Navigate; goBa
               <Ionicons name="code-slash" size={20} color={colors.secondary} />
             </View>
             <View style={styles.heroCopy}>
-              <Text style={[styles.kicker, { color: colors.secondary }]}>Arena de Codigo</Text>
+              <Text style={[styles.kicker, { color: colors.secondary }]}>Arena de Código</Text>
               <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>Treine como dev profissional.</Text>
               <Text style={[styles.subtitle, { color: colors.muted }]}>
-                {progress.completedChallengeIds.length}/{codeChallenges.length} concluidos • combo {progress.combo}x • {progress.medals.length} medalhas
+                {progress.completedChallengeIds.length}/{codeChallenges.length} concluídos • combo {progress.combo}x • {progress.medals.length} medalhas
               </Text>
             </View>
             <Pressable

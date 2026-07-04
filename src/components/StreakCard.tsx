@@ -18,7 +18,7 @@ export function StreakCard({ streak, onReward }: { streak: StreakState; onReward
         <GameButton title="Recompensa" icon="gift" variant="secondary" onPress={onReward} style={styles.button} />
       </View>
       <ProgressBar value={Math.min(1, streak.currentStreak / 7)} color={colors.accent} />
-      <Text style={[styles.footer, { color: colors.muted }]}>Melhor sequencia: {streak.bestStreak} dias. Volte amanha para manter o ritmo.</Text>
+      <Text style={[styles.footer, { color: colors.muted }]}>Melhor sequência: {streak.bestStreak} dias. Volte amanhã para manter o ritmo.</Text>
     </GameCard>
   );
 }

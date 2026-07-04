@@ -27,7 +27,7 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
   const intro = useMemo<AiTutorMessage>(() => ({
     id: 'professor-byte-intro',
     role: 'assistant',
-    content: 'Oi, eu sou o Professor Byte. Posso explicar erros, revisar codigo, criar desafios e treinar entrevista com voce.',
+    content: 'Oi, eu sou o Professor Byte. Posso explicar erros, revisar código, criar desafios e treinar entrevista com você.',
     createdAt: new Date().toISOString()
   }), []);
 
@@ -75,8 +75,8 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
               </View>
               <View style={styles.heroCopy}>
                 <Text style={[styles.kicker, { color: mode === 'remote' ? colors.primary : colors.warning }]}>Professor Byte</Text>
-                <Text style={[styles.title, { color: colors.text }]}>Tutor inteligente de codigo.</Text>
-                <Text style={[styles.subtitle, { color: colors.muted }]}>Pergunte sobre erros, linguagens, carreira ou cole codigo para uma revisao didatica.</Text>
+                <Text style={[styles.title, { color: colors.text }]}>Tutor inteligente de código.</Text>
+                <Text style={[styles.subtitle, { color: colors.muted }]}>Pergunte sobre erros, linguagens, carreira ou cole código para uma revisão didática.</Text>
               </View>
             </View>
             {warning ? <Text style={[styles.warning, { color: colors.warning }]}>{warning}</Text> : null}
@@ -90,21 +90,21 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
 
           {messages.map((message) => (
             <View key={message.id} style={[styles.bubble, message.role === 'user' ? styles.userBubble : styles.assistantBubble, { backgroundColor: message.role === 'user' ? colors.primary : colors.surfaceGlow, borderColor: message.role === 'user' ? colors.primary : colors.border }]}>
-              <Text style={[styles.bubbleLabel, { color: message.role === 'user' ? colors.onAccent : colors.accent }]}>{message.role === 'user' ? 'Voce' : 'Professor Byte'}</Text>
+              <Text style={[styles.bubbleLabel, { color: message.role === 'user' ? colors.onAccent : colors.accent }]}>{message.role === 'user' ? 'Você' : 'Professor Byte'}</Text>
               <Text style={[styles.bubbleText, { color: message.role === 'user' ? colors.onAccent : colors.text }]}>{message.content}</Text>
             </View>
           ))}
 
           {loading ? (
             <GameCard>
-              <Text style={[styles.subtitle, { color: colors.muted }]}>Professor Byte esta pensando...</Text>
+              <Text style={[styles.subtitle, { color: colors.muted }]}>Professor Byte está pensando...</Text>
             </GameCard>
           ) : null}
 
           <GameCard>
             <TextInput
               multiline
-              placeholder="Digite sua duvida ou cole um trecho de codigo..."
+              placeholder="Digite sua dúvida ou cole um trecho de código..."
               placeholderTextColor={colors.muted}
               value={input}
               onChangeText={setInput}

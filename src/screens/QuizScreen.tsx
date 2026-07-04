@@ -68,7 +68,7 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
         <ScrollView contentContainerStyle={styles.container}>
           <GameCard>
             <Text style={[styles.finishedTitle, { color: colors.text }]}>Preparando desafios</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Selecionando perguntas novas para esta sessao.</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Selecionando perguntas novas para esta sessão.</Text>
           </GameCard>
         </ScrollView>
       </GradientScreen>
@@ -81,7 +81,7 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
         <ScrollView contentContainerStyle={styles.container}>
           <GameCard>
             <Text style={[styles.finishedTitle, { color: colors.text }]}>Fase sem perguntas</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Nao encontramos perguntas validas para esta fase.</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Não encontramos perguntas válidas para esta fase.</Text>
             <GameButton title="Voltar ao mapa" icon="map" onPress={goBack} />
           </GameCard>
         </ScrollView>
@@ -121,8 +121,8 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
       <GradientScreen>
         <ScrollView contentContainerStyle={styles.container}>
           <GameCard>
-            <Text style={[styles.finishedTitle, { color: colors.text }]}>Fase concluida</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Voce acertou {correct} de {stageQuestions.length} desafios em {areaName(stage.areaId)}.</Text>
+            <Text style={[styles.finishedTitle, { color: colors.text }]}>Fase concluída</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Você acertou {correct} de {stageQuestions.length} desafios em {areaName(stage.areaId)}.</Text>
             <Text style={[styles.bigScore, { color: colors.accent }]}>{score} XP</Text>
             <Text style={[styles.confetti, { color: colors.primary }]}>★ ★ ★</Text>
             <GameButton title="Continuar jornada" icon="arrow-forward" onPress={() => navigate({ name: 'map' })} />
@@ -166,10 +166,10 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
         {selected !== null ? (
           <GameCard>
             <Text style={[styles.feedbackTitle, { color: selected === current.correctIndex ? colors.success : colors.danger }]}>
-              {selected === current.correctIndex ? 'Resposta correta' : 'Quase la'}
+              {selected === current.correctIndex ? 'Resposta correta' : 'Quase lá'}
             </Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>{current.explanation}</Text>
-            <GameButton title={index + 1 >= stageQuestions.length ? 'Ver Resultado' : 'Proxima Pergunta'} icon="arrow-forward" onPress={next} />
+            <GameButton title={index + 1 >= stageQuestions.length ? 'Ver resultado' : 'Próxima pergunta'} icon="arrow-forward" onPress={next} />
           </GameCard>
         ) : null}
       </ScrollView>

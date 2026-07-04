@@ -98,7 +98,7 @@ export function CampaignMissionScreen({
       <GradientScreen>
         <ScrollView contentContainerStyle={styles.container}>
           <GameCard>
-            <Text style={[styles.title, { color: colors.text }]}>Professor Byte esta preparando a missao</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Professor Byte está preparando a missão</Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>Selecionando desafios novos para {mission.concept}.</Text>
           </GameCard>
         </ScrollView>
@@ -112,8 +112,8 @@ export function CampaignMissionScreen({
         <ScrollView contentContainerStyle={styles.container}>
           <GameButton title="Voltar" icon="chevron-back" variant="ghost" onPress={onBack} />
           <GameCard>
-            <Text style={[styles.title, { color: colors.text }]}>Missao sem desafios</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Nao encontramos perguntas validas para esta missao.</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Missão sem desafios</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Não encontramos perguntas válidas para esta missão.</Text>
           </GameCard>
         </ScrollView>
       </GradientScreen>
@@ -126,7 +126,7 @@ export function CampaignMissionScreen({
         <ScrollView contentContainerStyle={styles.container}>
           <GameButton title="Voltar" icon="chevron-back" variant="ghost" onPress={onBack} />
           <GameCard style={{ borderColor: colors.primary }}>
-            <Text style={[styles.kicker, { color: colors.primary }]}>Professor Byte prepara voce</Text>
+            <Text style={[styles.kicker, { color: colors.primary }]}>Professor Byte prepara você</Text>
             <Text style={[styles.title, { color: colors.text }]}>{mission.title}</Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>{tone.intro}</Text>
             <View style={[styles.mentorPanel, { backgroundColor: colors.surfaceGlow, borderColor: colors.border }]}>
@@ -136,13 +136,13 @@ export function CampaignMissionScreen({
           </GameCard>
 
           <GameCard>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Objetivo da missao</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Objetivo da missão</Text>
             <InfoRow label="Linguagem" value={tone.label} />
             <InfoRow label="Dificuldade" value={current.difficulty} />
             <InfoRow label="XP" value={`+${mission.rewardXp}`} />
             <InfoRow label="Moedas" value={`+${mission.rewardCoins}`} />
             <InfoRow label="Objetivo" value={mentorMissionService.objectiveFor(mission)} />
-            <GameButton title="Comecar Desafio" icon="play" onPress={() => setPhase('challenge')} style={styles.inlineButton} />
+            <GameButton title="Começar desafio" icon="play" onPress={() => setPhase('challenge')} style={styles.inlineButton} />
           </GameCard>
         </ScrollView>
       </GradientScreen>
@@ -152,7 +152,7 @@ export function CampaignMissionScreen({
   return (
     <GradientScreen>
       <ScrollView contentContainerStyle={styles.container}>
-        <GameButton title="Sair da missao" icon="chevron-back" variant="ghost" onPress={onBack} />
+        <GameButton title="Sair da missão" icon="chevron-back" variant="ghost" onPress={onBack} />
         <GameCard style={{ borderColor: colors.accent }}>
           <View style={styles.topRow}>
             <Text style={[styles.kicker, { color: colors.accent }]}>{tone.label} • {mission.concept}</Text>
@@ -190,10 +190,10 @@ export function CampaignMissionScreen({
         {selected !== null ? (
           <GameCard>
             <Text style={[styles.feedbackTitle, { color: selected === current.correctIndex ? colors.success : colors.danger }]}>
-              {selected === current.correctIndex ? 'Resposta correta' : 'Professor Byte entrou na revisao'}
+              {selected === current.correctIndex ? 'Resposta correta' : 'Professor Byte entrou na revisão'}
             </Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>{current.explanation}</Text>
-            <GameButton title={index + 1 >= missionQuestions.length ? 'Ver Resultado' : 'Proxima Pergunta'} icon="arrow-forward" onPress={next} disabled={finishing} />
+            <GameButton title={index + 1 >= missionQuestions.length ? 'Ver resultado' : 'Próxima pergunta'} icon="arrow-forward" onPress={next} disabled={finishing} />
           </GameCard>
         ) : null}
       </ScrollView>

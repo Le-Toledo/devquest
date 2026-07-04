@@ -43,7 +43,7 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
     return (
       <GradientScreen>
         <GameCard>
-          <Text style={{ color: colors.text }}>Desafio nao encontrado.</Text>
+          <Text style={{ color: colors.text }}>Desafio não encontrado.</Text>
           <GameButton title="Voltar" onPress={goBack} />
         </GameCard>
       </GradientScreen>
@@ -93,9 +93,9 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
       <GradientScreen>
         <ScrollView contentContainerStyle={styles.container}>
           <GameCard style={{ borderColor: colors.success }}>
-            <Text style={[styles.kicker, { color: colors.success }]}>Bloco concluido</Text>
+            <Text style={[styles.kicker, { color: colors.success }]}>Bloco concluído</Text>
             <Text style={[styles.title, { color: colors.text }]}>Arena finalizada</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Voce resolveu {correctInSession} de {sessionIds.length} desafios neste bloco.</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Você resolveu {correctInSession} de {sessionIds.length} desafios neste bloco.</Text>
             <Text style={[styles.reward, { color: colors.text }]}>+{earnedInSession.xp} XP • +{earnedInSession.coins} moedas</Text>
           </GameCard>
           <GameButton title="Continuar Jornada" icon="arrow-forward" onPress={goBack} />
@@ -117,7 +117,7 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
         {selected !== null ? (
           <GameCard style={{ borderColor: selected === challenge.correctIndex ? colors.success : colors.danger }}>
             <Text style={[styles.sectionTitle, { color: selected === challenge.correctIndex ? colors.success : colors.danger }]}>
-              {selected === challenge.correctIndex ? 'Desafio concluido' : 'Bug enviado para revisao'}
+              {selected === challenge.correctIndex ? 'Desafio concluído' : 'Bug enviado para revisão'}
             </Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>{challenge.explanation}</Text>
             <Text style={[styles.reward, { color: colors.text }]}>
@@ -126,7 +126,7 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
                 : 'Professor Byte salvou este ponto para revisar depois.'}
             </Text>
             {selected !== challenge.correctIndex ? <GameButton title="Tentar novamente" icon="refresh" variant="secondary" onPress={() => setSelected(null)} /> : null}
-            {selected === challenge.correctIndex ? <GameButton title={hasNextChallenge ? 'Proximo Desafio' : 'Ver Resultado'} icon="arrow-forward" onPress={advance} /> : null}
+            {selected === challenge.correctIndex ? <GameButton title={hasNextChallenge ? 'Próximo desafio' : 'Ver resultado'} icon="arrow-forward" onPress={advance} /> : null}
           </GameCard>
         ) : null}
       </ScrollView>

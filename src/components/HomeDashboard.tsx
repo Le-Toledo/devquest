@@ -29,13 +29,11 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
     { title: 'Campanha', subtitle: 'História guiada', icon: 'compass', tone: 'primary', onPress: () => navigate({ name: 'campaign' }) },
     { title: 'Academia Dev', subtitle: 'Aulas e base', icon: 'school', tone: 'secondary', onPress: () => navigate({ name: 'academy' }) },
     { title: 'Arena de Código', subtitle: 'Desafios práticos', icon: 'code-slash', tone: 'accent', onPress: () => navigate({ name: 'codeArena' }) },
-    { title: 'Laboratório', subtitle: 'Erros para revisar', icon: 'flask', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
+    { title: 'Laboratório', subtitle: 'Treino com erros', icon: 'flask', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
+    { title: 'Revisão', subtitle: 'Fixação guiada', icon: 'refresh-circle', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
     { title: 'Perfil', subtitle: 'Estatísticas', icon: 'person-circle', tone: 'secondary', onPress: () => navigate({ name: 'profile' }) },
     { title: 'Loja', subtitle: 'Itens e moedas', icon: 'storefront', tone: 'accent', onPress: () => navigate({ name: 'shop' }) },
-    { title: 'Premium', subtitle: 'Conteúdo futuro', icon: 'diamond', tone: 'premium', onPress: () => navigate({ name: 'premium' }) },
-    { title: 'Ranking', subtitle: 'Compare XP', icon: 'podium', tone: 'muted', onPress: () => navigate({ name: 'ranking' }) },
-    { title: user ? 'Conta' : 'Salvar nuvem', subtitle: user ? 'Backup ativo' : 'Progresso local', icon: 'cloud-upload', tone: 'muted', onPress: () => navigate({ name: 'account' }) },
-    { title: 'Ajustes', subtitle: 'Tema e sons', icon: 'settings', tone: 'muted', onPress: () => navigate({ name: 'settings' }) }
+    { title: 'Premium', subtitle: 'Benefícios', icon: 'diamond', tone: 'premium', onPress: () => navigate({ name: 'premium' }) }
   ];
 
   const colorFor = (tone: ModeTile['tone']) => {
@@ -55,6 +53,15 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
           <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>Olá, {profile.name}</Text>
         </View>
         <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir ranking"
+            onPress={() => navigate({ name: 'ranking' })}
+            hitSlop={8}
+            style={({ pressed }) => [styles.iconButton, { backgroundColor: colors.surfaceGlow, borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+          >
+            <Ionicons name="podium" size={18} color={colors.accent} />
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Abrir perfil"
@@ -80,10 +87,16 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
         <InfoChip label="Nível" value={profile.level} color={colors.primary} />
         <InfoChip label="XP" value={profile.xp} color={colors.secondary} />
         <InfoChip label="Moedas" value={profile.coins} color={colors.accent} />
-        <View style={[styles.syncChip, { borderColor: syncColor, backgroundColor: colors.surfaceSoft }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Abrir perfil e sincronização"
+          onPress={() => navigate({ name: 'profile' })}
+          hitSlop={6}
+          style={({ pressed }) => [styles.syncChip, { borderColor: syncColor, backgroundColor: colors.surfaceSoft, opacity: pressed ? 0.75 : 1 }]}
+        >
           <Ionicons name={user ? 'cloud-done' : 'cloud-offline'} size={12} color={syncColor} />
           <Text style={[styles.syncText, { color: syncColor }]}>{user ? 'Sync' : 'Local'}</Text>
-        </View>
+        </Pressable>
       </View>
 
       <GameCard style={{ ...styles.journeyCard, borderColor: colors.primary }}>
@@ -93,20 +106,22 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
             <Text style={[styles.journeyTitle, { color: colors.text }]}>Continuar Jornada</Text>
             <Text style={[styles.journeySubtitle, { color: colors.muted }]}>{completedStages} fases concluídas na campanha</Text>
           </View>
-          <View style={styles.journeyActions}>
-            <GameButton title="Entrar" icon="arrow-forward" onPress={() => navigate({ name: 'campaign' })} style={styles.primaryAction} />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Perguntar ao Professor Byte"
-              onPress={() => navigate({ name: 'professorByte', initialPrompt: 'Qual é meu melhor próximo passo hoje?', context: { source: 'general', topic: 'Home' } })}
-              hitSlop={8}
-              style={({ pressed }) => [styles.byteAction, { backgroundColor: colors.surfaceGlow, borderColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
-            >
-              <Ionicons name="chatbubbles" size={18} color={colors.secondary} />
-            </Pressable>
-          </View>
+          <GameButton title="Entrar" icon="arrow-forward" onPress={() => navigate({ name: 'campaign' })} style={styles.primaryAction} />
         </View>
       </GameCard>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Perguntar ao Professor Byte"
+        onPress={() => navigate({ name: 'professorByte', initialPrompt: 'Qual é meu melhor próximo passo hoje?', context: { source: 'general', topic: 'Home' } })}
+        style={({ pressed }) => [styles.byteBar, { backgroundColor: colors.surfaceSoft, borderColor: colors.border, opacity: pressed ? 0.76 : 1 }]}
+      >
+        <View style={[styles.byteIcon, { borderColor: colors.secondary, backgroundColor: colors.surfaceGlow }]}>
+          <Ionicons name="chatbubbles" size={16} color={colors.secondary} />
+        </View>
+        <Text style={[styles.byteText, { color: colors.text }]}>Professor Byte</Text>
+        <Text style={[styles.byteMeta, { color: colors.muted }]} numberOfLines={1}>dica rápida para estudar melhor</Text>
+      </Pressable>
 
       <GameCard style={styles.progressCard}>
         <View style={styles.progressHeader}>
@@ -175,8 +190,8 @@ const styles = StyleSheet.create({
   greeting: { flex: 1 },
   kicker: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
   title: { fontSize: 23, lineHeight: 27, fontWeight: '900', marginTop: 1 },
-  headerActions: { flexDirection: 'row', gap: 8 },
-  iconButton: { width: 38, height: 38, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  headerActions: { flexDirection: 'row', gap: 7 },
+  iconButton: { width: 36, height: 36, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   infoChip: { minHeight: 38, minWidth: 72, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, justifyContent: 'center' },
   infoValue: { fontSize: 13, lineHeight: 15, fontWeight: '900' },
@@ -189,9 +204,11 @@ const styles = StyleSheet.create({
   cardKicker: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
   journeyTitle: { fontSize: 22, lineHeight: 26, fontWeight: '900', marginTop: 1 },
   journeySubtitle: { fontSize: 12, lineHeight: 16, marginTop: 3 },
-  journeyActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   primaryAction: { minHeight: 44, paddingHorizontal: 14 },
-  byteAction: { width: 44, height: 44, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  byteBar: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10 },
+  byteIcon: { width: 28, height: 28, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  byteText: { fontSize: 13, lineHeight: 16, fontWeight: '900' },
+  byteMeta: { flex: 1, fontSize: 11, lineHeight: 14, fontWeight: '700' },
   progressCard: { padding: 12 },
   progressHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 },
   sectionTitle: { fontSize: 16, lineHeight: 20, fontWeight: '900' },
@@ -200,8 +217,8 @@ const styles = StyleSheet.create({
   progressFooter: { fontSize: 11, lineHeight: 15, marginTop: 8, fontWeight: '700' },
   sectionHeader: { marginTop: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  modeCard: { width: '48%', minHeight: 104, borderWidth: 1, borderRadius: 12, padding: 11 },
-  modeIcon: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 9 },
+  modeCard: { flexBasis: '47.5%', flexGrow: 1, minHeight: 96, borderWidth: 1, borderRadius: 10, padding: 10 },
+  modeIcon: { width: 32, height: 32, borderRadius: 9, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   modeTitle: { fontSize: 14, lineHeight: 17, fontWeight: '900' },
   modeSubtitle: { fontSize: 11, lineHeight: 15, marginTop: 3, fontWeight: '700' }
 });

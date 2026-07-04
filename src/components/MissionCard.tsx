@@ -33,7 +33,7 @@ export function MissionCard({
           <Text style={[styles.description, { color: colors.muted }]}>{mission.description}</Text>
         </View>
       </View>
-      <GameButton title={completed ? 'Concluida' : locked ? 'Bloqueada' : 'Iniciar missao'} icon="play" variant={completed ? 'ghost' : 'secondary'} disabled={locked || completed} onPress={onStart} />
+      <GameButton title={completed ? 'Concluída' : locked ? 'Bloqueada' : 'Iniciar missão'} icon="play" variant={completed ? 'ghost' : 'secondary'} disabled={locked || completed} onPress={onStart} />
     </GameCard>
   );
 }

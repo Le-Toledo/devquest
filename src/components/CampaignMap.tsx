@@ -36,20 +36,20 @@ export function CampaignMap({ progress, onOpenChapter }: { progress: CampaignPro
                   <Ionicons name={done ? 'medal' : unlocked ? chapter.icon : 'lock-closed'} size={28} color={colors.onAccent} />
                 </View>
                 <View style={styles.info}>
-                  <Text style={[styles.kicker, { color: chapter.visualTheme }]}>Capitulo {chapter.order}</Text>
+                  <Text style={[styles.kicker, { color: chapter.visualTheme }]}>Capítulo {chapter.order}</Text>
                   <Text style={[styles.title, { color: colors.text }]}>{chapter.title}</Text>
                   <Text style={[styles.description, { color: colors.muted }]}>{chapter.description}</Text>
                 </View>
               </View>
               <View style={styles.progressRow}>
-                <Text style={[styles.meta, { color: colors.muted }]}>{completed}/{missions.length} missoes</Text>
+                <Text style={[styles.meta, { color: colors.muted }]}>{completed}/{missions.length} missões</Text>
                 <View style={[styles.bossPill, { backgroundColor: colors.surfaceGlow, borderColor: done ? colors.success : colors.accent }]}>
                   <Ionicons name={done ? 'ribbon' : 'skull'} size={13} color={done ? colors.success : colors.accent} />
                   <Text style={[styles.meta, { color: done ? colors.success : colors.accent }]}>{done ? 'Medalha conquistada' : `Boss: ${boss?.name ?? 'Final'}`}</Text>
                 </View>
               </View>
               <ProgressBar value={(completed + (bossDefeated ? 1 : 0)) / (missions.length + 1)} color={chapter.visualTheme} />
-              <GameButton title={unlocked ? 'Abrir capitulo' : 'Bloqueado'} icon="map" variant={unlocked ? 'secondary' : 'ghost'} disabled={!unlocked} onPress={() => onOpenChapter(chapter)} style={styles.button} />
+              <GameButton title={unlocked ? 'Abrir capítulo' : 'Bloqueado'} icon="map" variant={unlocked ? 'secondary' : 'ghost'} disabled={!unlocked} onPress={() => onOpenChapter(chapter)} style={styles.button} />
             </GameCard>
           </View>
         );

@@ -6,11 +6,11 @@ import { useSettings } from '../hooks/useSettings';
 import { gradients } from '../theme';
 
 export function GradientScreen({ children }: { children: ReactNode }) {
-  const { theme } = useSettings();
+  const { colors, theme } = useSettings();
   const palette = theme === 'dark' ? gradients.dark : gradients.light;
   return (
-    <LinearGradient colors={palette} style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
+    <LinearGradient colors={palette} style={[styles.fill, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
         <View pointerEvents="none" style={styles.topBand} />
         <View pointerEvents="none" style={styles.gridBand} />
         <View pointerEvents="none" style={styles.lowerBand} />
@@ -22,6 +22,9 @@ export function GradientScreen({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   fill: {
+    flex: 1
+  },
+  safeArea: {
     flex: 1
   },
   topBand: {

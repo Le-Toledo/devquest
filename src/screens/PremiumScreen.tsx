@@ -14,7 +14,7 @@ export function PremiumScreen({ goBack }: { goBack: () => void }) {
         <GameCard style={{ borderColor: colors.accent }}>
           <Text style={[styles.kicker, { color: colors.accent }]}>Vitrine futura</Text>
           <Text style={[styles.title, { color: colors.text }]}>CodeQuest Premium</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Uma previa transparente dos beneficios planejados. Nenhum pagamento real esta ativo neste MVP.</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>Uma prévia transparente dos benefícios planejados. Nenhum pagamento real está ativo neste MVP.</Text>
         </GameCard>
         {premiumPlans.map((plan) => (
           <GameCard key={plan.id} style={{ borderColor: plan.highlighted ? colors.accent : colors.border }}>

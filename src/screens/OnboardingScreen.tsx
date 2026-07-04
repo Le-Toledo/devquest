@@ -10,7 +10,7 @@ import { InitialTrack, OnboardingGoal } from '../types/monetization';
 
 const goals: { id: OnboardingGoal; title: string }[] = [
   { id: 'zero', title: 'Aprender do zero' },
-  { id: 'practice', title: 'Praticar codigo' },
+  { id: 'practice', title: 'Praticar código' },
   { id: 'interview', title: 'Preparar entrevista' },
   { id: 'career', title: 'Carreira dev' }
 ];
@@ -42,8 +42,8 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
       <ScrollView contentContainerStyle={styles.container}>
         <GameCard style={{ borderColor: colors.primary }}>
           <Text style={[styles.kicker, { color: colors.primary }]}>Bem-vindo</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Sua jornada dev comeca com um plano.</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Escolha um objetivo, uma trilha e um avatar. O CodeQuest ajusta a primeira experiencia para voce evoluir sem se perder.</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Sua jornada dev começa com um plano.</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>Escolha um objetivo, uma trilha e um avatar. O CodeQuest ajusta a primeira experiência para você evoluir sem se perder.</Text>
         </GameCard>
 
         <GameCard>
@@ -65,7 +65,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           </View>
         </GameCard>
 
-        <GameButton title="Comecar minha primeira missao" icon="rocket" onPress={finish} />
+        <GameButton title="Começar minha primeira missão" icon="rocket" onPress={finish} />
       </ScrollView>
     </GradientScreen>
   );

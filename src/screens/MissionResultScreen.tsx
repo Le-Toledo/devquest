@@ -24,19 +24,19 @@ export function MissionResultScreen({
     <GradientScreen>
       <ScrollView contentContainerStyle={styles.container}>
         <GameCard>
-          <Text style={[styles.kicker, { color: victory ? colors.success : colors.danger }]}>{victory ? 'Missao concluida' : 'Bug encontrado'}</Text>
+          <Text style={[styles.kicker, { color: victory ? colors.success : colors.danger }]}>{victory ? 'Missão concluída' : 'Bug encontrado'}</Text>
           <Text style={[styles.title, { color: colors.text }]}>{mission.title}</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>{victory ? 'Bau aberto, progresso salvo e o proximo desafio ficou mais perto.' : 'O bug venceu esta rodada, mas deixou pistas claras para sua revisao.'}</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>{victory ? 'Baú aberto, progresso salvo e o próximo desafio ficou mais perto.' : 'O bug venceu esta rodada, mas deixou pistas claras para sua revisão.'}</Text>
           <View style={[styles.chest, { backgroundColor: victory ? colors.accent : colors.surfaceSoft }]}>
             <Text style={[styles.chestText, { color: victory ? colors.onAccent : colors.text }]}>{victory ? 'RECOMPENSA' : 'REVISAR'}</Text>
           </View>
           <Text style={[styles.reward, { color: colors.text }]}>
-            {victory ? `+${mission.rewardXp} XP • +${mission.rewardCoins} moedas` : 'Erro salvo no Laboratorio de Revisao.'}
+            {victory ? `+${mission.rewardXp} XP • +${mission.rewardCoins} moedas` : 'Erro salvo no Laboratório de Revisão.'}
           </Text>
         </GameCard>
         <GameCard style={{ borderColor: victory ? colors.primary : colors.warning }}>
           <Text style={[styles.kicker, { color: victory ? colors.primary : colors.warning }]}>Professor Byte</Text>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{victory ? 'Comentario do mentor' : 'Plano de revisao'}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{victory ? 'Comentário do mentor' : 'Plano de revisão'}</Text>
           <Text style={[styles.subtitle, { color: colors.muted }]}>{victory ? tone.victory : tone.defeat}</Text>
         </GameCard>
         <GameButton title={victory ? 'Continuar Jornada' : 'Tentar de novo com calma'} icon="book" variant="secondary" onPress={victory ? onContinue : onRetry} />

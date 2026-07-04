@@ -55,9 +55,9 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
     return (
       <GradientScreen>
         <ScrollView contentContainerStyle={styles.container}>
-          <GameButton title="Voltar ao laboratorio" icon="chevron-back" variant="ghost" onPress={() => { setSelected(null); setLastResult(null); }} />
+          <GameButton title="Voltar ao laboratório" icon="chevron-back" variant="ghost" onPress={() => { setSelected(null); setLastResult(null); }} />
           <GameCard>
-            <Text style={[styles.kicker, { color: colors.accent }]}>Sessao de revisao</Text>
+            <Text style={[styles.kicker, { color: colors.accent }]}>Sessão de revisão</Text>
             <Text style={[styles.title, { color: colors.text }]}>{selected.prompt}</Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>Professor Byte vai desmontar esse bug em partes pequenas.</Text>
           </GameCard>
@@ -87,12 +87,12 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
           {lastResult ? (
             <GameCard style={{ borderColor: lastResult === 'correct' ? colors.success : colors.danger }}>
               <Text style={[styles.sectionTitle, { color: lastResult === 'correct' ? colors.success : colors.danger }]}>
-                {lastResult === 'correct' ? 'Boa revisao!' : 'Tudo bem, vamos simplificar.'}
+                {lastResult === 'correct' ? 'Boa revisão!' : 'Tudo bem, vamos simplificar.'}
               </Text>
               <Text style={[styles.subtitle, { color: colors.muted }]}>
                 {lastResult === 'correct'
-                  ? 'Intervalo aumentado, XP entregue e o bug perdeu forca.'
-                  : 'Intervalo reduzido para revisar hoje. Persistencia tambem da recompensa.'}
+                  ? 'Intervalo aumentado, XP entregue e o bug perdeu força.'
+                  : 'Intervalo reduzido para revisar hoje. Persistência também dá recompensa.'}
               </Text>
             </GameCard>
           ) : null}
@@ -116,12 +116,12 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
               <Ionicons name="flask" size={28} color={colors.primary} />
             </View>
             <View style={styles.heroCopy}>
-              <Text style={[styles.kicker, { color: colors.primary }]}>Laboratorio de Revisao</Text>
+              <Text style={[styles.kicker, { color: colors.primary }]}>Laboratório de Revisão</Text>
               <Text style={[styles.title, { color: colors.text }]}>Transforme bugs em XP.</Text>
-              <Text style={[styles.subtitle, { color: colors.muted }]}>O Professor Byte organiza seus erros por prioridade e usa repeticao espacada para fixar conceitos.</Text>
+              <Text style={[styles.subtitle, { color: colors.muted }]}>O Professor Byte organiza seus erros por prioridade e usa repetição espaçada para fixar conceitos.</Text>
             </View>
           </View>
-          <GameButton title="Perguntar ao Professor Byte" icon="chatbubbles" variant="secondary" onPress={() => navigate({ name: 'professorByte', initialPrompt: 'Explique meu erro', context: { source: 'review', topic: 'Laboratorio de Revisao' }, returnTo: { name: 'reviewLab' } })} style={styles.inlineButton} />
+          <GameButton title="Perguntar ao Professor Byte" icon="chatbubbles" variant="secondary" onPress={() => navigate({ name: 'professorByte', initialPrompt: 'Explique meu erro', context: { source: 'review', topic: 'Laboratório de Revisão' }, returnTo: { name: 'reviewLab' } })} style={styles.inlineButton} />
           <View style={styles.progressRow}>
             <Text style={[styles.small, { color: colors.muted }]}>{stats.learnedErrors}/{stats.totalErrors} aprendidos</Text>
             <Text style={[styles.small, { color: colors.accent }]}>{stats.improvementRate}% melhora</Text>
@@ -151,7 +151,7 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
         {errors.length === 0 ? (
           <GameCard>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Nenhum erro salvo ainda</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Quando voce errar quizzes ou missoes de campanha, eles aparecerao aqui para revisao inteligente.</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Quando você errar quizzes ou missões de campanha, eles aparecerão aqui para revisão inteligente.</Text>
           </GameCard>
         ) : (
           errors.map((error) => <ErrorReviewCard key={error.id} error={error} onReview={() => setSelected(error)} onLearned={() => markLearned(error.id)} />)

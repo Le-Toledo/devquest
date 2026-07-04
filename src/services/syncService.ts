@@ -1,105 +1,226 @@
-import { academyProgressService } from './academyProgressService';
-import { campaignProgressService } from './campaignProgressService';
-import { codeArenaService } from './codeArenaService';
-import { localAnalyticsService } from './localAnalyticsService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { academyProgressService, defaultAcademyProgress } from './academyProgressService';
+import { campaignProgressService, defaultCampaignProgress } from './campaignProgressService';
+import { codeArenaService, defaultCodeArenaProgress } from './codeArenaService';
+import { defaultLocalAnalytics, localAnalyticsService } from './localAnalyticsService';
 import { reviewService } from './reviewService';
-import { storage } from './storage';
-import { streakService } from './streakService';
+import { createDefaultPlayer, storage } from './storage';
+import { storageKeys } from './storageKeys';
+import { defaultStreakState, streakService } from './streakService';
 import { supabase } from './supabaseClient';
 import { AuthUser, CloudProgress, SyncResult } from '../types/backend';
+import { PlayerProfile, ThemeMode } from '../types/game';
 import { calculateLevel } from '../utils/progression';
 
 const latestIso = () => new Date().toISOString();
+const playerProgressTable = 'player_progress';
 
-function chooseBetterProgress(local: CloudProgress, cloud?: CloudProgress | null): CloudProgress {
-  if (!cloud) return local;
-  const localScore = local.player.xp + Object.keys(local.player.completedStages).length * 250 + (local.academy?.completedLessonIds.length ?? 0) * 80 + (local.arena?.completedChallengeIds.length ?? 0) * 80;
-  const cloudScore = cloud.player.xp + Object.keys(cloud.player.completedStages).length * 250 + (cloud.academy?.completedLessonIds.length ?? 0) * 80 + (cloud.arena?.completedChallengeIds.length ?? 0) * 80;
-  if (cloudScore > localScore) {
-    return { ...cloud, updatedAt: latestIso() };
-  }
-  return local;
-}
+type PlayerProgressRow = {
+  user_id: string;
+  player_name: string | null;
+  xp: number | null;
+  coins: number | null;
+  level: number | null;
+  progress: CloudProgress | null;
+  streak: CloudProgress['streak'] | null;
+  achievements: string[] | null;
+  settings: CloudProgress['settings'] | null;
+  updated_at: string | null;
+};
 
 const friendlySyncError = (message?: string) => {
   const lower = message?.toLowerCase() ?? '';
-  if (lower.includes('failed to fetch') || lower.includes('network')) return 'Sem conexao com a nuvem agora. Seu progresso local continua salvo.';
-  if (lower.includes('permission') || lower.includes('row-level') || lower.includes('policy')) return 'A sincronizacao foi bloqueada pela seguranca do Supabase. Verifique o SQL/RLS.';
-  if (lower.includes('jwt')) return 'Sua sessao expirou. Entre novamente para sincronizar.';
-  return 'Nao foi possivel sincronizar agora. Tente novamente em instantes.';
+  if (lower.includes('failed to fetch') || lower.includes('network')) return 'Sem conexão com a nuvem no momento. Seu progresso local continua salvo.';
+  if (lower.includes('permission') || lower.includes('row-level') || lower.includes('policy')) return 'A sincronização foi bloqueada pela segurança do Supabase. Verifique o SQL/RLS.';
+  if (lower.includes('jwt')) return 'Sua sessão expirou. Entre novamente para sincronizar.';
+  return 'Não foi possível sincronizar agora. Tente novamente em instantes.';
+};
+
+const progressScore = (progress: CloudProgress) =>
+  progress.player.xp +
+  Object.keys(progress.player.completedStages).length * 250 +
+  (progress.academy?.completedLessonIds.length ?? 0) * 80 +
+  (progress.arena?.completedChallengeIds.length ?? 0) * 80 +
+  (progress.campaign?.completedMissionIds.length ?? 0) * 120 +
+  (progress.player.achievements.length ?? 0) * 50;
+
+const isDefaultish = (progress: CloudProgress) => progressScore(progress) <= progress.player.coins + 1 && Object.keys(progress.player.completedStages).length === 0;
+
+const loadLastSyncAt = async () => AsyncStorage.getItem(storageKeys.cloudSyncAt);
+const saveLastSyncAt = async (value: string) => AsyncStorage.setItem(storageKeys.cloudSyncAt, value);
+
+const normalizePlayer = (player: PlayerProfile): PlayerProfile => ({
+  ...player,
+  level: calculateLevel(player.xp),
+  unlockedAreaIds: Array.from(new Set(player.unlockedAreaIds)),
+  achievements: Array.from(new Set(player.achievements)),
+  ownedItems: Array.from(new Set(player.ownedItems)),
+  answerHistory: player.answerHistory.slice(-200)
+});
+
+const toCloudProgress = (row: PlayerProgressRow): CloudProgress => {
+  const fallback = createDefaultPlayer();
+  const saved = row.progress;
+  const player = normalizePlayer({
+    ...fallback,
+    ...(saved?.player ?? {}),
+    name: row.player_name || saved?.player?.name || fallback.name,
+    xp: row.xp ?? saved?.player?.xp ?? fallback.xp,
+    coins: row.coins ?? saved?.player?.coins ?? fallback.coins,
+    level: row.level ?? saved?.player?.level ?? fallback.level,
+    achievements: row.achievements ?? saved?.player?.achievements ?? fallback.achievements,
+    selectedTheme: row.settings?.theme ?? saved?.player?.selectedTheme ?? fallback.selectedTheme
+  });
+
+  return {
+    userId: row.user_id,
+    ...saved,
+    player,
+    campaign: saved?.campaign ?? defaultCampaignProgress,
+    academy: saved?.academy ?? defaultAcademyProgress,
+    arena: saved?.arena ?? defaultCodeArenaProgress,
+    reviewErrors: saved?.reviewErrors ?? [],
+    streak: row.streak ?? saved?.streak ?? defaultStreakState,
+    localAnalytics: saved?.localAnalytics ?? defaultLocalAnalytics,
+    settings: row.settings ?? saved?.settings ?? { theme: player.selectedTheme },
+    updatedAt: row.updated_at ?? saved?.updatedAt ?? latestIso()
+  };
+};
+
+const cloudToRow = (progress: CloudProgress) => ({
+  user_id: progress.userId,
+  player_name: progress.player.name,
+  xp: progress.player.xp,
+  coins: progress.player.coins,
+  level: progress.player.level,
+  progress,
+  streak: progress.streak ?? defaultStreakState,
+  achievements: progress.player.achievements,
+  settings: progress.settings ?? { theme: progress.player.selectedTheme },
+  updated_at: progress.updatedAt
+});
+
+const shouldUseCloud = (local: CloudProgress, cloud: CloudProgress, lastSyncAt: string | null) => {
+  if (isDefaultish(local)) return true;
+  if (!lastSyncAt) return progressScore(cloud) > progressScore(local);
+  return new Date(cloud.updatedAt).getTime() > new Date(lastSyncAt).getTime();
 };
 
 export const syncService = {
   async buildLocalProgress(user: AuthUser): Promise<CloudProgress> {
-    const player = await storage.loadPlayer();
+    const player = normalizePlayer(await storage.loadPlayer());
+    const theme = await storage.loadTheme();
     return {
       userId: user.id,
-      player,
+      player: { ...player, selectedTheme: theme as ThemeMode },
       campaign: await campaignProgressService.load(),
       academy: await academyProgressService.load(),
       arena: await codeArenaService.load(),
       reviewErrors: await reviewService.load(),
       streak: await streakService.load(),
+      localAnalytics: await localAnalyticsService.load(),
+      settings: { theme },
       updatedAt: latestIso()
     };
   },
 
+  async applyLocalProgress(progress: CloudProgress) {
+    const player = normalizePlayer(progress.player);
+    await storage.savePlayer(player);
+    await campaignProgressService.save(progress.campaign ?? defaultCampaignProgress);
+    await academyProgressService.save(progress.academy ?? defaultAcademyProgress);
+    await codeArenaService.save(progress.arena ?? defaultCodeArenaProgress);
+    await reviewService.save(progress.reviewErrors ?? []);
+    await streakService.save(progress.streak ?? defaultStreakState);
+    await localAnalyticsService.save(progress.localAnalytics ?? defaultLocalAnalytics);
+    if (progress.settings?.theme) await storage.saveTheme(progress.settings.theme);
+  },
+
+  async upsertProgress(progress: CloudProgress): Promise<SyncResult> {
+    if (!supabase) return { status: 'disabled', message: 'Supabase não configurado. O app continua funcionando offline.' };
+
+    const normalized: CloudProgress = {
+      ...progress,
+      player: normalizePlayer(progress.player),
+      updatedAt: progress.updatedAt || latestIso()
+    };
+
+    const { error } = await supabase.from(playerProgressTable).upsert(cloudToRow(normalized), { onConflict: 'user_id' });
+    if (error) return { status: 'error', message: friendlySyncError(error.message) };
+
+    await saveLastSyncAt(normalized.updatedAt);
+    return { status: 'synced', message: 'Progresso sincronizado com sucesso.', lastSyncAt: normalized.updatedAt, cloudProgress: normalized };
+  },
+
   async syncNow(user: AuthUser | null): Promise<SyncResult> {
-    if (!supabase) return { status: 'disabled', message: 'Supabase nao configurado. O app continua funcionando offline.' };
+    if (!supabase) return { status: 'disabled', message: 'Supabase não configurado. O app continua funcionando offline.' };
     if (!user) return { status: 'offline', message: 'Entre na sua conta para sincronizar.' };
 
     try {
       const local = await this.buildLocalProgress(user);
-      const { data: cloudRow, error: loadError } = await supabase.from('cloud_progress').select('progress, updated_at').eq('user_id', user.id).maybeSingle();
+      const { data: row, error: loadError } = await supabase
+        .from(playerProgressTable)
+        .select('user_id, player_name, xp, coins, level, progress, streak, achievements, settings, updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle<PlayerProgressRow>();
+
       if (loadError) return { status: 'error', message: friendlySyncError(loadError.message) };
 
-      const cloud = cloudRow?.progress as CloudProgress | null | undefined;
-      const merged = chooseBetterProgress(local, cloud);
-      const player = merged.player;
-      player.level = calculateLevel(player.xp);
+      if (!row) {
+        const initial = { ...local, updatedAt: latestIso() };
+        const created = await this.upsertProgress(initial);
+        return created.status === 'synced' ? { ...created, message: 'Registro de progresso criado na nuvem.' } : created;
+      }
 
-      await storage.savePlayer(player);
-      if (merged.campaign) await campaignProgressService.save(merged.campaign);
-      if (merged.academy) await academyProgressService.save(merged.academy);
-      if (merged.arena) await codeArenaService.save(merged.arena);
-      if (merged.reviewErrors) await reviewService.save(merged.reviewErrors);
-      if (merged.streak) await streakService.save(merged.streak);
+      const cloud = toCloudProgress(row);
+      const lastSyncAt = await loadLastSyncAt();
+      const selected = shouldUseCloud(local, cloud, lastSyncAt) ? cloud : { ...local, updatedAt: latestIso() };
 
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: user.id,
-        email: user.email ?? null,
-        display_name: player.name,
-        avatar: player.avatar,
-        updated_at: merged.updatedAt
-      });
-      if (profileError) return { status: 'error', message: friendlySyncError(profileError.message) };
-
-      const { error: progressError } = await supabase.from('cloud_progress').upsert({
-        user_id: user.id,
-        progress: merged,
-        updated_at: merged.updatedAt
-      });
-      if (progressError) return { status: 'error', message: friendlySyncError(progressError.message) };
-
-      const analytics = await localAnalyticsService.load();
-      const favoriteLanguage = localAnalyticsService.favoriteLanguage(analytics);
-      const leaderboardRows = ['global', 'weekly'].map((period) => ({
-        user_id: user.id,
-        display_name: player.name,
-        avatar: player.avatar,
-        xp: player.xp,
-        level: player.level,
-        favorite_language: favoriteLanguage === 'nenhuma' ? null : favoriteLanguage,
-        period,
-        updated_at: merged.updatedAt
-      }));
-
-      const { error: leaderboardError } = await supabase.from('leaderboard_entries').upsert(leaderboardRows, { onConflict: 'user_id,period' });
-      if (leaderboardError) return { status: 'error', message: friendlySyncError(leaderboardError.message) };
-
-      return { status: 'synced', message: 'Progresso sincronizado com sucesso.', lastSyncAt: merged.updatedAt, cloudProgress: merged };
+      await this.applyLocalProgress(selected);
+      return this.upsertProgress(selected);
     } catch (error) {
       return { status: 'error', message: friendlySyncError(error instanceof Error ? error.message : undefined) };
     }
+  },
+
+  async pushLocal(user: AuthUser | null): Promise<SyncResult> {
+    if (!supabase) return { status: 'disabled', message: 'Supabase não configurado. O app continua funcionando offline.' };
+    if (!user) return { status: 'offline', message: 'Entre na sua conta para sincronizar.' };
+
+    try {
+      const { data: row, error } = await supabase.from(playerProgressTable).select('updated_at').eq('user_id', user.id).maybeSingle<{ updated_at: string | null }>();
+      if (error) return { status: 'error', message: friendlySyncError(error.message) };
+
+      const lastSyncAt = await loadLastSyncAt();
+      if (row?.updated_at && lastSyncAt && new Date(row.updated_at).getTime() > new Date(lastSyncAt).getTime()) {
+        return this.syncNow(user);
+      }
+
+      const local = await this.buildLocalProgress(user);
+      return this.upsertProgress({ ...local, updatedAt: latestIso() });
+    } catch (syncError) {
+      return { status: 'error', message: friendlySyncError(syncError instanceof Error ? syncError.message : undefined) };
+    }
+  },
+
+  async resetCloudProgress(user: AuthUser | null): Promise<SyncResult> {
+    if (!supabase) return { status: 'disabled', message: 'Supabase não configurado. O app continua funcionando offline.' };
+    if (!user) return { status: 'offline', message: 'Entre na sua conta para sincronizar.' };
+
+    const player = normalizePlayer(createDefaultPlayer());
+    const progress: CloudProgress = {
+      userId: user.id,
+      player,
+      campaign: defaultCampaignProgress,
+      academy: defaultAcademyProgress,
+      arena: defaultCodeArenaProgress,
+      reviewErrors: [],
+      streak: defaultStreakState,
+      localAnalytics: defaultLocalAnalytics,
+      settings: { theme: player.selectedTheme },
+      updatedAt: latestIso()
+    };
+
+    return this.upsertProgress(progress);
   }
 };

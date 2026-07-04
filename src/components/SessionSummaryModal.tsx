@@ -30,18 +30,18 @@ export function SessionSummaryModal({
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.backdrop}>
         <GameCard style={styles.card}>
-          <Text style={[styles.kicker, { color: colors.accent }]}>Resumo da sessao</Text>
+          <Text style={[styles.kicker, { color: colors.accent }]}>Resumo da sessão</Text>
           <Text style={[styles.title, { color: colors.text }]}>Boa run, dev.</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Seu progresso foi salvo. A proxima missao ja esta esperando.</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>Seu progresso foi salvo. A próxima missão já está esperando.</Text>
           <View style={styles.grid}>
             <StatBadge label="XP" value={xp} />
             <StatBadge label="Moedas" value={coins} color={colors.accent} />
             <StatBadge label="Aulas" value={lessons} color={colors.primary} />
             <StatBadge label="Desafios" value={challenges} color={colors.secondary} />
-            <StatBadge label="Revisoes" value={reviews} color={colors.success} />
+            <StatBadge label="Revisões" value={reviews} color={colors.success} />
             <StatBadge label="Streak" value={`${streak}d`} color={colors.premium} />
           </View>
-          <Text style={[styles.next, { color: colors.text }]}>Proxima recomendacao: {nextRecommendation}</Text>
+          <Text style={[styles.next, { color: colors.text }]}>Próxima recomendação: {nextRecommendation}</Text>
           <GameButton title="Continuar jornada" icon="arrow-forward" onPress={onClose} />
         </GameCard>
       </View>

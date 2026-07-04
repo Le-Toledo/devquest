@@ -55,7 +55,7 @@ export function MapScreen({ navigate, goBack }: { navigate: Navigate; goBack: ()
                     <View style={styles.stageText}>
                       <Text style={[styles.stageTitle, { color: colors.text }]}>{stage.title}</Text>
                       <Text style={[styles.subtitle, { color: colors.muted }]}>
-                        {stageLocked ? `Desbloqueia no nivel ${stage.requiredLevel}` : `${stage.questionIds.length} desafios`}
+                        {stageLocked ? `Desbloqueia no nível ${stage.requiredLevel}` : `${stage.questionIds.length} desafios`}
                       </Text>
                     </View>
                     <Text style={[styles.stars, { color: colors.accent }]}>{'★'.repeat(result?.stars ?? 0)}{'☆'.repeat(3 - (result?.stars ?? 0))}</Text>

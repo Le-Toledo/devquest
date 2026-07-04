@@ -5,7 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "codequestacademy",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#080A0F",
     "splash": {
       "backgroundColor": "#07111f",
       "resizeMode": "contain"

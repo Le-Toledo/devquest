@@ -81,7 +81,7 @@ export const reviewService = {
       areaId: input.areaId,
       concept: input.concept,
       difficulty: input.difficulty ?? 'intermediario',
-      selectedAnswer: 'Missao falhou durante a simulacao',
+      selectedAnswer: 'Missão falhou durante a simulação',
       correctAnswer: 'Revisar o conceito e tentar novamente',
       explanation: input.explanation,
       hint: input.hint,

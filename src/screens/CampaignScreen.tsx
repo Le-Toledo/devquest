@@ -86,7 +86,7 @@ export function CampaignScreen({ navigate, goBack }: { navigate: Navigate; goBac
         prompt: mission.title,
         areaId: mission.areaId ?? 'logic',
         concept: mission.concept,
-        explanation: `Esta missao trabalha ${mission.concept}. Releia o objetivo, identifique a regra principal e tente resolver em passos menores.`,
+        explanation: `Esta missão trabalha ${mission.concept}. Releia o objetivo, identifique a regra principal e tente resolver em passos menores.`,
         hint: `Revise ${mission.concept} antes de tentar novamente.`
       });
       setProgress(next);
@@ -154,7 +154,7 @@ export function CampaignScreen({ navigate, goBack }: { navigate: Navigate; goBac
         <ScrollView contentContainerStyle={styles.container}>
           <GameButton title="Voltar ao mapa" icon="chevron-back" variant="ghost" onPress={() => setMode({ name: 'map' })} />
           <GameCard style={{ borderColor: mode.chapter.visualTheme }}>
-            <Text style={[styles.kicker, { color: mode.chapter.visualTheme }]}>Capitulo {mode.chapter.order}</Text>
+            <Text style={[styles.kicker, { color: mode.chapter.visualTheme }]}>Capítulo {mode.chapter.order}</Text>
             <Text style={[styles.title, { color: colors.text }]}>{mode.chapter.title}</Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>{mode.chapter.description}</Text>
           </GameCard>
@@ -180,17 +180,17 @@ export function CampaignScreen({ navigate, goBack }: { navigate: Navigate; goBac
         <GameCard>
           <Text style={[styles.kicker, { color: colors.accent }]}>Modo Campanha</Text>
           <Text style={[styles.title, { color: colors.text }]}>A Jornada do Desenvolvedor</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Capitulo atual: {stats.currentChapter.title} • {stats.missionsDone} missoes • {stats.bossesDone} bosses</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>Capítulo atual: {stats.currentChapter.title} • {stats.missionsDone} missões • {stats.bossesDone} chefes</Text>
           <GameButton title="Academia Dev" icon="school" variant="secondary" onPress={() => navigate({ name: 'academy' })} style={styles.inlineButton} />
           <GameButton title="Perguntar ao Professor Byte" icon="chatbubbles" variant="secondary" onPress={() => navigate({ name: 'professorByte', initialPrompt: 'Me ajude na campanha', context: { source: 'campaign', topic: 'A Jornada do Desenvolvedor' }, returnTo: { name: 'campaign' } })} style={styles.inlineButton} />
           <GameButton title="Ver perfil" icon="person" variant="secondary" onPress={() => navigate({ name: 'profile' })} style={styles.inlineButton} />
-            <GameButton title="Laboratorio de Revisao" icon="flask" variant="secondary" onPress={() => navigate({ name: 'reviewLab' })} style={styles.inlineButton} />
+            <GameButton title="Laboratório de Revisão" icon="flask" variant="secondary" onPress={() => navigate({ name: 'reviewLab' })} style={styles.inlineButton} />
         </GameCard>
 
         {!progress.selectedTrack ? (
           <GameCard>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Escolha sua trilha inicial</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>A trilha personaliza falas e destaca missoes, mas nao bloqueia conteudo.</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>A trilha personaliza falas e destaca missões, mas não bloqueia conteúdo.</Text>
             {trackOptions.map((track) => (
               <GameButton key={track.id} title={track.title} icon="compass" variant="secondary" onPress={() => chooseTrack(track.id, track.dialogueId)} style={styles.trackButton} />
             ))}
