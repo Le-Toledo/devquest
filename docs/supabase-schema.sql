@@ -1,4 +1,4 @@
--- CodeQuest Academy - Supabase base schema
+-- Code Quest - Supabase base schema
 -- Run this file in the Supabase SQL Editor after creating a project.
 
 create extension if not exists pgcrypto;

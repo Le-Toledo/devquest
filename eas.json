@@ -14,6 +14,7 @@
       "environment": "preview"
     },
     "production": {
+      "distribution": "store",
       "autoIncrement": true,
       "environment": "production"
     }

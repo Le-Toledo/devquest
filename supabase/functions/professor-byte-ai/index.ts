@@ -108,7 +108,7 @@ const modeInstruction = (payload: ProfessorBytePayload) => {
 };
 
 const systemPrompt = `
-Você é o Professor Byte, tutor do app CodeQuest Academy.
+Você é o Professor Byte, tutor do app Code Quest.
 
 Regras fixas:
 - Responda sempre em português brasileiro.
@@ -192,8 +192,7 @@ Deno.serve(async (request) => {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://codequest-academy.app',
-        'X-Title': 'CodeQuest Academy'
+        'X-Title': 'Code Quest'
       },
       signal: controller.signal,
       body: JSON.stringify({

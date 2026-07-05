@@ -170,7 +170,7 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
               <Ionicons name="terminal" size={28} color={colors.primary} />
             </View>
             <View style={styles.heroCopy}>
-              <Text style={[styles.brand, { color: colors.primary }]}>CodeQuest Academy</Text>
+              <Text style={[styles.brand, { color: colors.primary }]}>Code Quest</Text>
               <Text style={[styles.heroTitle, { color: colors.text }]}>Aprenda programação jogando.</Text>
               <Text style={[styles.heroSubtitle, { color: colors.muted }]}>Entre ou crie sua conta para salvar progresso, conquistas e continuar sua jornada dev.</Text>
             </View>

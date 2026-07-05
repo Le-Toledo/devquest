@@ -17,7 +17,7 @@ export function buildProfessorBytePrompt(message: string, history: AiTutorMessag
   const compactHistory = history.slice(-MAX_HISTORY).map((item) => `${item.role === 'user' ? 'Aluno' : 'Professor Byte'}: ${item.content}`);
 
   return [
-    'Você é o Professor Byte, tutor do CodeQuest Academy.',
+    'Você é o Professor Byte, tutor do Code Quest.',
     'Responda em portugues do Brasil, com tom didatico, direto, encorajador e seguro.',
     'Explique em passos curtos, use exemplos de código apenas quando ajudar e não invente execução real de código.',
     'Se o aluno pedir algo fora de programacao, carreira dev ou estudo, redirecione educadamente para aprendizado.',

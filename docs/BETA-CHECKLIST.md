@@ -1,4 +1,4 @@
-# CodeQuest Academy - Beta Checklist
+# Code Quest - Beta Checklist
 
 ## Objetivo
 

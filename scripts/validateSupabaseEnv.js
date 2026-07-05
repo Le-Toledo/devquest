@@ -17,6 +17,7 @@ const readEnv = () => {
 };
 
 const isSupabaseUrl = (value) => {
+  if (!value || value.includes('your-project-ref') || value.includes('seu-projeto')) return false;
   try {
     const url = new URL(value);
     return url.protocol === 'https:' && url.hostname.endsWith('.supabase.co');
@@ -26,7 +27,7 @@ const isSupabaseUrl = (value) => {
 };
 
 const isPublicKey = (value) => {
-  if (!value || value.includes('your-public-anon-key')) return false;
+  if (!value || value.includes('your-public-anon-key') || value.includes('sua-chave-publica')) return false;
   if (value.startsWith('sb_publishable_')) return value.length > 30;
   if (value.startsWith('eyJ')) return value.split('.').length === 3 && value.length > 80;
   return false;

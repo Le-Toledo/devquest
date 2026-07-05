@@ -1,33 +1,30 @@
 {
   "expo": {
-    "name": "CodeQuest Academy",
-    "slug": "codequest-academy",
+    "name": "Code Quest",
+    "slug": "code-quest",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "codequestacademy",
+    "scheme": "codequest",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#080A0F",
     "splash": {
       "backgroundColor": "#07111f",
       "resizeMode": "contain"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.codequest.academy"
+      "bundleIdentifier": "com.leandrotoledo.codequest",
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.codequest.academy"
+      "package": "com.leandrotoledo.codequest",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro"
     },
-    "plugins": [
-      "expo-router",
-      "expo-asset"
-    ],
+    "plugins": ["expo-router", "expo-asset"],
     "experiments": {
       "typedRoutes": true
     }

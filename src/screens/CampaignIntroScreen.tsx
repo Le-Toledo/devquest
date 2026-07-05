@@ -30,7 +30,7 @@ export function CampaignIntroScreen({
       <ScrollView contentContainerStyle={styles.container}>
         <GameCard>
           <Text style={[styles.kicker, { color: colors.accent }]}>A Jornada do Desenvolvedor</Text>
-          <Text style={[styles.title, { color: colors.text }]}>CodeQuest Academy está sob ataque.</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Code Quest está sob ataque.</Text>
           <Text style={[styles.subtitle, { color: colors.muted }]}>Entre na campanha, escolha sua trilha e restaure os sistemas da academia enfrentando bugs, chefes e desafios profissionais.</Text>
         </GameCard>
         <DialogueBox sequence={dialogueById('campaign-intro')} onDone={finish} finalLabel="Entrar na Campanha" />

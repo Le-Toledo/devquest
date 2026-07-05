@@ -1,4 +1,4 @@
-# ADR-001: Arquitetura do CodeQuest Academy
+# ADR-001: Arquitetura do Code Quest
 
 ## Status
 
@@ -6,7 +6,7 @@ Aceito.
 
 ## Contexto
 
-CodeQuest Academy e um app educacional em Expo SDK 54, React Native e TypeScript. O produto cresceu para incluir campanha RPG, quizzes, Academia Dev, Arena de Codigo, Laboratorio de Revisao, loja, ranking, premium simulado, streak e analytics local.
+Code Quest e um app educacional em Expo SDK 54, React Native e TypeScript. O produto cresceu para incluir campanha RPG, quizzes, Academia Dev, Arena de Codigo, Laboratorio de Revisao, loja, ranking, premium simulado, streak e analytics local.
 
 O objetivo arquitetural e permitir crescimento por anos sem transformar telas em arquivos gigantes nem misturar UI, persistencia e conteudo.
 

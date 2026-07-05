@@ -111,7 +111,7 @@ lessons.forEach((lesson) => {
   });
 });
 
-console.log('CodeQuest Academy Content Audit');
+console.log('Code Quest Content Audit');
 console.log(`Trilhas: ${learningPaths.length}`);
 console.log(`Modulos: ${academyModules.length}`);
 console.log(`Aulas: ${lessons.length}`);

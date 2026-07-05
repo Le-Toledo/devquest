@@ -4,7 +4,7 @@ export const mentorDialogues: DialogueSequence[] = [
   {
     id: 'campaign-intro',
     dialogues: [
-      { id: 'intro-1', characterId: 'professor-byte', text: 'Bem-vindo à CodeQuest Academy. Aqui, cada linha de código vira progresso real.', mood: 'happy' },
+      { id: 'intro-1', characterId: 'professor-byte', text: 'Bem-vindo ao Code Quest. Aqui, cada linha de código vira progresso real.', mood: 'happy' },
       { id: 'intro-2', characterId: 'professor-byte', text: 'Os sistemas da academia foram corrompidos. Para restaurá-los, você vai aprender, praticar e revisar como um dev profissional.', mood: 'warning' },
       { id: 'intro-3', characterId: 'syntax-bug', text: 'Hehehe... quero ver você compilar coragem sem esquecer uma chave.', mood: 'warning' },
       { id: 'intro-4', characterId: 'professor-byte', text: 'Errou? Excelente. Bugs são mapas: eles mostram exatamente onde seu entendimento vai evoluir.', mood: 'calm' }

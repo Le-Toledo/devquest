@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-CodeQuest Academy nasceu como app offline com AsyncStorage. A evolucao para produto conectado precisa adicionar autenticacao, sincronizacao e ranking online sem quebrar saves locais, sem exigir build nativo e sem expor segredos no cliente Expo.
+Code Quest nasceu como app offline com AsyncStorage. A evolucao para produto conectado precisa adicionar autenticacao, sincronizacao e ranking online sem quebrar saves locais, sem exigir build nativo e sem expor segredos no cliente Expo.
 
 ## Decision
 

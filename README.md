@@ -1,4 +1,4 @@
-# CodeQuest Academy
+# Code Quest
 
 MVP premium de jogo educacional em React Native com Expo SDK 54 e TypeScript. O app ensina programacao por campanha RPG, quizzes, Arena de Codigo, Academia Dev, Laboratorio de Revisao, XP, moedas, conquistas, loja, streak, premium simulado e progresso persistido.
 
@@ -101,7 +101,7 @@ Os componentes antigos `GameButton`, `GameCard` e `GradientScreen` tambem usam o
 
 ## Guia Visual
 
-CodeQuest Academy deve parecer um RPG educacional premium: tecnologia, aventura, progresso e mentoria. A interface prioriza clareza acima de decoracao e evita depender de uma unica familia de cor.
+Code Quest deve parecer um RPG educacional premium: tecnologia, aventura, progresso e mentoria. A interface prioriza clareza acima de decoracao e evita depender de uma unica familia de cor.
 
 Principios visuais:
 
@@ -247,7 +247,7 @@ Como testar:
 
 ## Academia Dev
 
-A Academia Dev e a escola de programacao dentro do CodeQuest Academy. Ela foi estruturada como curso guiado, com trilhas, modulos e aulas completas. O objetivo e que o jogador consiga estudar de verdade antes de entrar em campanha, arena, revisao ou entrevista.
+A Academia Dev e a escola de programacao dentro do Code Quest. Ela foi estruturada como curso guiado, com trilhas, modulos e aulas completas. O objetivo e que o jogador consiga estudar de verdade antes de entrar em campanha, arena, revisao ou entrevista.
 
 Estrutura atual:
 
@@ -563,7 +563,7 @@ Esses dados aparecem no Perfil e ajudam a validar engajamento sem depender de ba
 
 ## Backend Supabase
 
-O CodeQuest Academy agora possui uma base conectada com Supabase sem abandonar o comportamento offline. O app continua local-first com AsyncStorage, e a nuvem entra para autenticacao, sincronizacao de progresso e ranking online.
+O Code Quest possui uma base conectada com Supabase sem abandonar o comportamento offline. O app continua local-first com AsyncStorage, e a nuvem entra para autenticacao, sincronizacao de progresso e ranking online.
 
 Arquivos principais:
 
@@ -613,32 +613,63 @@ npx expo start -c
 - Se o Supabase exigir confirmacao de email, o cadastro mostra a mensagem de confirmacao e nao entra no Hub ate existir sessao.
 - `Dev Explorer` e progresso local sao apenas fallback visual/local; nao contam como usuario autenticado.
 
-### EAS/TestFlight
+## Publicação/TestFlight
 
-O arquivo `eas.json` possui perfis `development`, `preview` e `production`. Para TestFlight, configure as mesmas variaveis no ambiente `production` do EAS antes do build.
+Esta secao prepara o build iOS de producao para TestFlight mantendo o app compativel com Expo Go em desenvolvimento.
 
-Pelo EAS CLI atual, use ambientes:
+Pre-requisitos:
+
+- Conta Apple Developer ativa.
+- App criado no App Store Connect com o bundle id `com.leandrotoledo.codequest`.
+- Acesso ao projeto Expo/EAS e login no EAS CLI.
+- Projeto Supabase configurado com Auth, RLS e anon public key/publishable key.
+- Arquivo `.env` local criado a partir de `.env.example`. O `.env` nunca deve ser enviado ao GitHub.
+
+Comandos iniciais:
 
 ```bash
-eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value "URL_DO_SUPABASE" --visibility plain
-eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "ANON_KEY_OU_PUBLISHABLE_KEY_PUBLICA" --visibility sensitive
+npm install
+npx expo-doctor
+npm install -g eas-cli
+eas login
+eas build:configure
 ```
 
-Se sua versao do EAS CLI ainda usa secrets por projeto, o equivalente e:
+Configure as variaveis publicas do Supabase no EAS antes do build de producao. Use apenas a Project URL e a anon public key/publishable key; nunca use `service_role_key`, JWT secret, database password ou chave privada no app.
 
 ```bash
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "URL_DO_SUPABASE"
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "ANON_KEY_OU_PUBLISHABLE_KEY_PUBLICA"
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "SUA_URL_DO_SUPABASE"
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "SUA_CHAVE_ANON_PUBLICA"
 ```
 
-Build iOS para TestFlight:
+Build iOS de producao para TestFlight:
 
 ```bash
 eas build --platform ios --profile production
+```
+
+Envio para TestFlight/App Store Connect:
+
+```bash
 eas submit --platform ios --profile production
 ```
 
-Nao coloque `service_role_key` no EAS, no `.env`, no `app.json` ou no codigo. O app mobile deve usar somente chave publica anon/publishable com RLS ligado no Supabase.
+Observacoes sobre App Store Connect:
+
+- O app deve estar criado no App Store Connect antes do submit.
+- Preencha nome publico, categoria, classificacao indicativa, dados de privacidade, screenshots e informacoes de teste.
+- Crie e publique uma politica de privacidade antes da revisao.
+- Se o submit pedir credenciais Apple, siga o fluxo interativo do EAS CLI.
+
+Auditoria de assets e publicacao:
+
+- Icone do app: pendente. Crie um PNG final antes de apontar `expo.icon` no `app.json`.
+- Splash screen: pendente como arte final. O `app.json` define apenas cor e modo de resize; crie a imagem antes de adicionar `splash.image`.
+- Adaptive icon Android: pendente. Crie os assets finais antes de apontar `android.adaptiveIcon`.
+- Privacy policy: pendente. Adicione o link publico no App Store Connect e mantenha a URL documentada neste README.
+- EAS production: perfil `production` configurado para distribuicao `store`, build iOS e submit via `submit.production`.
+
+Nao coloque `.env`, `service_role_key` ou segredos privados no GitHub. O app Expo deve usar somente `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
 ### Como testar login
 

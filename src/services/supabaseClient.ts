@@ -8,7 +8,7 @@ const supabaseUrl = cleanEnvValue(process.env.EXPO_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = cleanEnvValue(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 const hasValidSupabaseUrl = (value?: string) => {
-  if (!value || value.includes('your-project-ref')) return false;
+  if (!value || value.includes('your-project-ref') || value.includes('seu-projeto')) return false;
   try {
     const url = new URL(value);
     return url.protocol === 'https:' && url.hostname.endsWith('.supabase.co');
@@ -18,7 +18,7 @@ const hasValidSupabaseUrl = (value?: string) => {
 };
 
 const hasValidAnonKey = (value?: string) => {
-  if (!value || value.includes('your-public-anon-key')) return false;
+  if (!value || value.includes('your-public-anon-key') || value.includes('sua-chave-publica')) return false;
   if (value.startsWith('sb_publishable_')) return value.length > 30;
   if (value.startsWith('eyJ')) return value.split('.').length === 3 && value.length > 80;
   return false;
