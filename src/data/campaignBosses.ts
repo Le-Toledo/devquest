@@ -1,0 +1,12 @@
+import { CampaignBoss } from '../types/campaign';
+
+export const campaignBosses: CampaignBoss[] = [
+  { id: 'boss-syntax', chapterId: 'chapter-1', name: 'Bug de Sintaxe', description: 'Um erro pequeno que impede grandes ideias de rodar.', characterId: 'syntax-bug', health: 100, attack: 12, weakness: 'Atenção a operadores, chaves e ordem dos passos.', introDialogueId: 'boss-syntax-intro', winDialogueId: 'boss-syntax-win', loseDialogueId: 'mistake-review', rewardXp: 220, rewardCoins: 90 },
+  { id: 'boss-layout', chapterId: 'chapter-2', name: 'Layout Quebrado', description: 'Distorce interfaces e esconde botoes importantes.', characterId: 'broken-layout', health: 130, attack: 16, weakness: 'Semantica, flexbox, grid e estados de UI.', introDialogueId: 'boss-layout-intro', winDialogueId: 'boss-layout-win', loseDialogueId: 'mistake-review', rewardXp: 260, rewardCoins: 110 },
+  { id: 'boss-api', chapterId: 'chapter-3', name: 'API Corrompida', description: 'Retorna 500 quando deveria entregar contratos claros.', characterId: 'corrupted-api', health: 150, attack: 18, weakness: 'HTTP, validação, banco e tratamento de erro.', introDialogueId: 'boss-api-intro', winDialogueId: 'boss-api-win', loseDialogueId: 'mistake-review', rewardXp: 300, rewardCoins: 130 },
+  { id: 'boss-null', chapterId: 'chapter-4', name: 'Null Pointer', description: 'Aparece quando o app confia em dados ausentes.', characterId: 'null-pointer', health: 170, attack: 20, weakness: 'Null safety, Kotlin, Java e estados mobile.', introDialogueId: 'boss-null-intro', winDialogueId: 'boss-null-win', loseDialogueId: 'mistake-review', rewardXp: 340, rewardCoins: 150 },
+  { id: 'boss-legacy', chapterId: 'chapter-5', name: 'Legacy Code', description: 'Um sistema antigo que resiste a testes e refatorações.', characterId: 'legacy-code', health: 190, attack: 22, weakness: 'Git, testes, clean code e pequenas melhorias seguras.', introDialogueId: 'boss-legacy-intro', winDialogueId: 'boss-legacy-win', loseDialogueId: 'mistake-review', rewardXp: 390, rewardCoins: 170 },
+  { id: 'boss-master', chapterId: 'chapter-6', name: 'Mestre Dev', description: 'A entrevista final em forma de duelo técnico.', characterId: 'master-dev', health: 220, attack: 25, weakness: 'Clareza, fundamentos, portfolio e raciocínio.', introDialogueId: 'boss-master-intro', winDialogueId: 'boss-master-win', loseDialogueId: 'mistake-review', rewardXp: 500, rewardCoins: 220 }
+];
+
+export const bossById = (id: string) => campaignBosses.find((boss) => boss.id === id);
