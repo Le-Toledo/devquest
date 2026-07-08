@@ -6,7 +6,7 @@ import { GradientScreen } from '../components/GradientScreen';
 import { useSettings } from '../hooks/useSettings';
 import { soundService } from '../services/soundService';
 
-export function SettingsScreen({ goBack, openAccount }: { goBack: () => void; openAccount: () => void }) {
+export function SettingsScreen({ goBack, openAccount, openFeedback }: { goBack: () => void; openAccount: () => void; openFeedback: () => void }) {
   const { colors, theme, toggleTheme } = useSettings();
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -51,6 +51,17 @@ export function SettingsScreen({ goBack, openAccount }: { goBack: () => void; op
           </View>
           <View style={styles.cardAction}>
             <GameButton title="Abrir perfil" icon="person-circle" variant="secondary" onPress={openAccount} />
+          </View>
+        </GameCard>
+        <GameCard>
+          <View style={styles.row}>
+            <View style={styles.info}>
+              <Text style={[styles.itemTitle, { color: colors.text }]}>Feedback do beta</Text>
+              <Text style={[styles.subtitle, { color: colors.muted }]}>Reporte bugs, ideias, dúvidas de conteúdo ou pontos confusos da experiência.</Text>
+            </View>
+          </View>
+          <View style={styles.cardAction}>
+            <GameButton title="Enviar feedback" icon="chatbubbles" variant="secondary" onPress={openFeedback} />
           </View>
         </GameCard>
       </ScrollView>

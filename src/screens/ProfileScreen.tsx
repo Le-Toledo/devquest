@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActionStateCard } from '../components/ActionStateCard';
 import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
 import { GradientScreen } from '../components/GradientScreen';
@@ -210,7 +211,16 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
                 <Text style={[styles.metric, { color: colors.muted }]}>{user?.email ?? 'Entre novamente para sincronizar progresso.'}</Text>
               </View>
             </View>
-            {!configured ? <Text style={[styles.metric, { color: colors.warning }]}>Supabase ainda não está configurado neste build.</Text> : null}
+            {!configured ? (
+              <ActionStateCard
+                title="Nuvem não configurada"
+                message="Você pode continuar jogando offline. Para backup e ranking online, configure o Supabase neste build."
+                icon="cloud-offline"
+                tone="warning"
+                embedded
+                primaryAction={{ title: 'Continuar offline', icon: 'phone-portrait', onPress: goBack }}
+              />
+            ) : null}
             <View style={styles.cardAction}>
               <GameButton title="Sair da conta" icon="log-out" variant="secondary" onPress={confirmSignOut} loading={signingOut} disabled={!user || signingOut || resetting} />
             </View>
@@ -221,6 +231,19 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Sincronização</Text>
           <Text style={[styles.metric, { color: syncResult?.status === 'error' ? colors.danger : colors.primary }]}>{syncStatus}</Text>
           {syncResult?.lastSyncAt ? <Text style={[styles.metric, { color: colors.muted }]}>Última sincronização: {new Date(syncResult.lastSyncAt).toLocaleString()}</Text> : null}
+          {syncResult?.status === 'error' ? (
+            <View style={styles.inlineState}>
+              <ActionStateCard
+                title="Não deu para sincronizar agora"
+                message={`${syncResult.message} Seu progresso local continua salvo neste aparelho.`}
+                icon="warning"
+                tone="error"
+                embedded
+                primaryAction={{ title: 'Tentar novamente', icon: 'refresh', onPress: syncNow, loading: syncing, disabled: syncing || !configured || !user }}
+                secondaryAction={{ title: 'Continuar offline', icon: 'phone-portrait', onPress: goBack, variant: 'secondary' }}
+              />
+            </View>
+          ) : null}
           <View style={styles.summaryGrid}>
             <ProfileMetric label="XP" value={localProgress?.player?.xp ?? profile.xp} />
             <ProfileMetric label="Nível" value={localProgress?.player?.level ?? profile.level} />
@@ -310,6 +333,14 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
           <Text style={[styles.metric, { color: colors.muted }]}>Sair da conta fica na seção Conta. A ação encerra apenas a sessão desta conta, e seu progresso local permanece salvo.</Text>
         </GameCard>
 
+        <GameCard>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Feedback do beta</Text>
+          <Text style={[styles.metric, { color: colors.muted }]}>Encontrou bug, texto confuso ou uma ideia boa? Envie um relato com contexto técnico básico para acelerar a correção.</Text>
+          <View style={styles.cardAction}>
+            <GameButton title="Enviar feedback" icon="chatbubbles" variant="secondary" onPress={() => navigate({ name: 'feedback' })} />
+          </View>
+        </GameCard>
+
         <GameCard style={{ borderColor: colors.danger }}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Ações perigosas</Text>
           <Text style={[styles.metric, { color: colors.muted }]}>Resetar progresso apaga XP, moedas, campanha, aulas, arena, streak, conquistas e revisões locais. Sua conta continua conectada.</Text>
@@ -357,6 +388,7 @@ const styles = StyleSheet.create({
   statusDot: { width: 12, height: 12, borderRadius: 6 },
   statusCopy: { flex: 1 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
+  inlineState: { marginTop: 12 },
   metricBox: { borderRadius: 8, borderWidth: 1, padding: 10, flexBasis: '47%', flexGrow: 1 },
   metricValue: { fontSize: 18, fontWeight: '900' },
   metricLabel: { marginTop: 2, fontSize: 11, fontWeight: '800' },

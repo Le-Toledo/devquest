@@ -40,6 +40,18 @@ create table if not exists public.leaderboard_entries (
   unique (user_id, period)
 );
 
+create table if not exists public.feedback_reports (
+  id text primary key,
+  user_id uuid references auth.users(id) on delete set null,
+  category text not null check (category in ('bug', 'idea', 'content', 'ux', 'other')),
+  message text not null check (char_length(message) between 10 and 1500),
+  contact_email text,
+  app_version text,
+  platform text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 alter table public.leaderboard_entries
   drop column if exists coins;
 
@@ -52,6 +64,7 @@ create index if not exists leaderboard_entries_language_idx
 alter table public.profiles enable row level security;
 alter table public.player_progress enable row level security;
 alter table public.leaderboard_entries enable row level security;
+alter table public.feedback_reports enable row level security;
 
 drop policy if exists "Profiles are readable by owner" on public.profiles;
 create policy "Profiles are readable by owner"
@@ -97,6 +110,10 @@ grant insert (user_id, display_name, avatar, xp, level, favorite_language, perio
   on public.leaderboard_entries to authenticated;
 grant update (display_name, avatar, xp, level, favorite_language, period, updated_at)
   on public.leaderboard_entries to authenticated;
+grant insert (id, user_id, category, message, contact_email, app_version, platform, metadata, created_at)
+  on public.feedback_reports to authenticated;
+grant select (id, user_id, category, message, contact_email, app_version, platform, metadata, created_at)
+  on public.feedback_reports to authenticated;
 
 drop policy if exists "Leaderboard entries are insertable by owner" on public.leaderboard_entries;
 create policy "Leaderboard entries are insertable by owner"
@@ -108,3 +125,13 @@ create policy "Leaderboard entries are updatable by owner"
   on public.leaderboard_entries for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+drop policy if exists "Feedback reports are insertable by owner" on public.feedback_reports;
+create policy "Feedback reports are insertable by owner"
+  on public.feedback_reports for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Feedback reports are readable by owner" on public.feedback_reports;
+create policy "Feedback reports are readable by owner"
+  on public.feedback_reports for select
+  using (auth.uid() = user_id);

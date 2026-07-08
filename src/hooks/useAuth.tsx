@@ -10,7 +10,8 @@ type AuthContextValue = {
   loading: boolean;
   configured: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
-  signUp: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string, name?: string) => Promise<AuthResult>;
+  resendConfirmation: (email: string) => Promise<{ error?: string }>;
   signOut: () => Promise<{ error?: string }>;
 };
 
@@ -66,13 +67,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, name?: string) => {
     if (!supabase) return { error: supabaseNotConfiguredMessage };
     try {
-      const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: name?.trim() ? { data: { name: name.trim(), display_name: name.trim() } } : undefined
+      });
       if (error) return { error: friendlyAuthError(error.message) };
       setSession(data.session);
       return { session: data.session };
+    } catch (error) {
+      return { error: friendlyAuthError(error instanceof Error ? error.message : undefined) };
+    }
+  };
+
+  const resendConfirmation = async (email: string) => {
+    if (!supabase) return { error: supabaseNotConfiguredMessage };
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() });
+      return error ? { error: friendlyAuthError(error.message) } : {};
     } catch (error) {
       return { error: friendlyAuthError(error instanceof Error ? error.message : undefined) };
     }
@@ -96,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     configured: isSupabaseConfigured,
     signIn,
     signUp,
+    resendConfirmation,
     signOut
   };
 

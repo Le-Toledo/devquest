@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActionStateCard } from '../components/ActionStateCard';
 import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
 import { GradientScreen } from '../components/GradientScreen';
@@ -16,6 +17,13 @@ const suggestions = [
   'Me ajude na entrevista'
 ];
 
+const quickActions = [
+  { title: 'Explicar mais simples', icon: 'accessibility' as const, prompt: 'Explique a resposta anterior de um jeito mais simples, como se eu estivesse começando agora.' },
+  { title: 'Só uma dica', icon: 'bulb' as const, prompt: 'Me dê apenas uma dica curta, sem entregar a resposta completa.' },
+  { title: 'Criar exemplo', icon: 'code-slash' as const, prompt: 'Crie um exemplo prático em código, com nomes em português e explicação curta.' },
+  { title: 'Mini desafio', icon: 'fitness' as const, prompt: 'Crie um mini desafio rápido para eu praticar esse conceito agora.' }
+];
+
 export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack: () => void; initialPrompt?: string; context?: AiTutorContext }) {
   const { colors } = useSettings();
   const [messages, setMessages] = useState<AiTutorMessage[]>([]);
@@ -23,6 +31,7 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<AiTutorMode>(aiTutorService.isRemoteConfigured ? 'remote' : 'mock');
   const [warning, setWarning] = useState(aiTutorService.isRemoteConfigured ? '' : 'Modo Professor Byte offline');
+  const [lastPrompt, setLastPrompt] = useState(initialPrompt ?? '');
 
   const intro = useMemo<AiTutorMessage>(() => ({
     id: 'professor-byte-intro',
@@ -30,6 +39,10 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
     content: 'Oi, eu sou o Professor Byte. Posso explicar erros, revisar código, criar desafios e treinar entrevista com você.',
     createdAt: new Date().toISOString()
   }), []);
+  const lastAssistantMessage = useMemo(
+    () => [...messages].reverse().find((message) => message.role === 'assistant' && message.id !== intro.id),
+    [intro.id, messages]
+  );
 
   useEffect(() => {
     aiTutorService.loadHistory().then((history) => setMessages(history.length ? history : [intro])).catch(() => setMessages([intro]));
@@ -46,6 +59,7 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
     if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
     setInput('');
     setLoading(true);
+    setLastPrompt(content);
     const userMessage = aiTutorService.createUserMessage(content);
     const withUser = [...messages, userMessage];
     setMessages(withUser);
@@ -55,6 +69,18 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
       setMode(response.mode);
       setWarning(response.warning ?? '');
       await persist(next);
+    } catch {
+      setMode('mock');
+      setWarning('Não consegui falar com a IA real agora. Você pode continuar com ajuda local ou tentar novamente.');
+      await persist([
+        ...withUser,
+        {
+          id: `professor-byte-error-${Date.now()}`,
+          role: 'assistant',
+          content: 'Tive uma falha de conexão, mas seu estudo não precisa parar. Tente reenviar a pergunta ou continue no modo offline.',
+          createdAt: new Date().toISOString()
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -64,6 +90,12 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
     await aiTutorService.clearHistory();
     setMessages([intro]);
     setWarning(aiTutorService.isRemoteConfigured ? '' : 'Modo Professor Byte offline');
+    setLastPrompt('');
+  };
+
+  const sendQuickAction = (prompt: string) => {
+    const contextText = lastAssistantMessage?.content ? `\n\nContexto da última resposta:\n${lastAssistantMessage.content.slice(0, 900)}` : '';
+    send(`${prompt}${contextText}`).catch(() => undefined);
   };
 
   return (
@@ -83,8 +115,18 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
                 <Text style={[styles.subtitle, { color: colors.muted }]}>Pergunte sobre erros, linguagens, carreira ou cole código para uma revisão didática.</Text>
               </View>
             </View>
-            {warning ? <Text style={[styles.warning, { color: colors.warning }]}>{warning}</Text> : null}
           </GameCard>
+
+          {warning ? (
+            <ActionStateCard
+              title={mode === 'remote' ? 'Aviso do Professor Byte' : 'Professor Byte em modo offline'}
+              message={`${warning}. O chat continua funcionando com respostas locais para você não perder o ritmo.`}
+              icon="cloud-offline"
+              tone="warning"
+              primaryAction={lastPrompt ? { title: 'Tentar novamente', icon: 'refresh', onPress: () => send(lastPrompt), loading, disabled: loading } : undefined}
+              secondaryAction={{ title: 'Continuar offline', icon: 'phone-portrait', onPress: () => setWarning(''), variant: 'secondary' }}
+            />
+          ) : null}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestions}>
             {suggestions.map((item) => (
@@ -99,6 +141,18 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
             </View>
           ))}
 
+          {lastAssistantMessage && !loading ? (
+            <GameCard>
+              <Text style={[styles.quickTitle, { color: colors.text }]}>Ações rápidas</Text>
+              <Text style={[styles.quickSubtitle, { color: colors.muted }]}>Use a última resposta como contexto para continuar estudando.</Text>
+              <View style={styles.quickGrid}>
+                {quickActions.map((action) => (
+                  <GameButton key={action.title} title={action.title} icon={action.icon} variant="secondary" onPress={() => sendQuickAction(action.prompt)} style={styles.quickButton} />
+                ))}
+              </View>
+            </GameCard>
+          ) : null}
+
           {loading ? (
             <GameCard>
               <Text style={[styles.subtitle, { color: colors.muted }]}>Professor Byte está pensando...</Text>
@@ -112,8 +166,10 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
               placeholderTextColor={colors.muted}
               value={input}
               onChangeText={setInput}
+              maxLength={1600}
               style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceSoft }]}
             />
+            <Text style={[styles.inputHint, { color: colors.muted }]}>{input.trim().length}/1600 caracteres. Perguntas menores recebem respostas melhores.</Text>
             <View style={styles.actions}>
               <GameButton title="Enviar" icon="send" onPress={() => send()} loading={loading} disabled={!input.trim() || loading} style={styles.actionButton} />
               <GameButton title="Limpar" icon="trash" variant="secondary" onPress={clear} disabled={loading} style={styles.actionButton} />
@@ -135,7 +191,6 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
   title: { fontSize: 30, lineHeight: 34, fontWeight: '900', marginTop: 4 },
   subtitle: { fontSize: 14, lineHeight: 20, marginTop: 6 },
-  warning: { marginTop: 12, fontSize: 12, fontWeight: '900' },
   suggestions: { gap: 8 },
   suggestionButton: { minHeight: 48 },
   bubble: { borderWidth: 1, borderRadius: 16, padding: 14, maxWidth: '92%' },
@@ -143,7 +198,12 @@ const styles = StyleSheet.create({
   assistantBubble: { alignSelf: 'flex-start' },
   bubbleLabel: { fontSize: 12, fontWeight: '900', marginBottom: 6 },
   bubbleText: { fontSize: 14, lineHeight: 21 },
+  quickTitle: { fontSize: 17, lineHeight: 22, fontWeight: '900' },
+  quickSubtitle: { fontSize: 13, lineHeight: 19, marginTop: 4 },
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
+  quickButton: { flexBasis: 136, flexGrow: 1, minHeight: 48 },
   input: { minHeight: 96, borderRadius: 8, borderWidth: 1, padding: 12, textAlignVertical: 'top', fontSize: 15, lineHeight: 21 },
+  inputHint: { fontSize: 12, lineHeight: 18, marginTop: 8 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
   actionButton: { flexBasis: 132, flexGrow: 1 }
 });

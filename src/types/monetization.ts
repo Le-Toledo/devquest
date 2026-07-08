@@ -13,6 +13,7 @@ export interface PremiumPlan {
 
 export interface OnboardingState {
   completed: boolean;
+  version?: number;
   goal?: OnboardingGoal;
   initialTrack?: InitialTrack;
   avatar?: string;

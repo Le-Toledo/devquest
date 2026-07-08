@@ -53,3 +53,23 @@ export interface SyncResult {
   lastSyncAt?: string;
   cloudProgress?: CloudProgress;
 }
+
+export type FeedbackCategory = 'bug' | 'idea' | 'content' | 'ux' | 'other';
+
+export interface FeedbackReport {
+  id: string;
+  category: FeedbackCategory;
+  message: string;
+  contactEmail?: string;
+  metadata: {
+    appVersion?: string;
+    platform: string;
+    userId?: string;
+    userEmail?: string;
+    playerLevel?: number;
+    playerXp?: number;
+    playerCoins?: number;
+  };
+  createdAt: string;
+  syncedAt?: string;
+}

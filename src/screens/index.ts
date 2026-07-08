@@ -9,6 +9,7 @@ export { CareerScreen } from './CareerScreen';
 export { CodeArenaScreen } from './CodeArenaScreen';
 export { CodeChallengeScreen } from './CodeChallengeScreen';
 export { DailyRewardScreen } from './DailyRewardScreen';
+export { FeedbackScreen } from './FeedbackScreen';
 export { HomeScreen } from './HomeScreen';
 export { LessonScreen } from './LessonScreen';
 export { LoginScreen } from './LoginScreen';

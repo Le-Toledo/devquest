@@ -3,6 +3,8 @@ import { InitialTrack, OnboardingGoal, OnboardingState } from '../types/monetiza
 import { parseJsonOrFallback } from '../utils/jsonStorage';
 import { storageKeys } from './storageKeys';
 
+export const onboardingVersion = 2;
+
 export interface StreakState {
   currentStreak: number;
   bestStreak: number;
@@ -61,7 +63,7 @@ export const streakService = {
     return parseJsonOrFallback<OnboardingState>(raw, { completed: false });
   },
   async completeOnboarding(goal: OnboardingGoal, initialTrack: InitialTrack, avatar: string) {
-    const next: OnboardingState = { completed: true, goal, initialTrack, avatar, completedAt: new Date().toISOString() };
+    const next: OnboardingState = { completed: true, version: onboardingVersion, goal, initialTrack, avatar, completedAt: new Date().toISOString() };
     await AsyncStorage.setItem(storageKeys.onboarding, JSON.stringify(next));
     return next;
   }

@@ -1,6 +1,7 @@
 export const storageKeys = {
   academyProgress: '@codequest/academy-progress',
   aiTutorHistory: '@codequest/ai-tutor-history',
+  aiTutorUsage: '@codequest/ai-tutor-usage',
   campaignProgress: '@codequest/campaign-progress',
   codeArena: '@codequest/code-arena',
   localAnalytics: '@codequest/local-analytics',
@@ -10,6 +11,7 @@ export const storageKeys = {
   reviewErrors: '@codequest/review-errors',
   settings: '@codequest/settings',
   cloudSyncAt: '@codequest/cloud-sync-at',
+  feedbackReports: '@codequest/feedback-reports',
   soundSettings: '@codequest/sound-settings',
   streak: '@codequest/streak'
 } as const;

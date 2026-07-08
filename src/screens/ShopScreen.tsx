@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActionStateCard } from '../components/ActionStateCard';
 import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
 import { GradientScreen } from '../components/GradientScreen';
@@ -7,7 +8,7 @@ import { shopItems } from '../data/shop';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
 
-export function ShopScreen({ goBack, openPremium }: { goBack: () => void; openPremium?: () => void }) {
+export function ShopScreen({ goBack, openPremium, openProfile }: { goBack: () => void; openPremium?: () => void; openProfile?: () => void }) {
   const { colors } = useSettings();
   const { profile, buyItem } = usePlayer();
 
@@ -27,6 +28,16 @@ export function ShopScreen({ goBack, openPremium }: { goBack: () => void; openPr
           </View>
         </GameCard>
         {openPremium ? <GameButton title="Ver CodeQuest Premium" icon="diamond" onPress={openPremium} /> : null}
+        {shopItems.length === 0 ? (
+          <ActionStateCard
+            title="Loja em manutenção"
+            message="Nenhum item está disponível agora. Suas moedas continuam salvas e você pode voltar mais tarde sem perder progresso."
+            icon="bag-handle"
+            tone="warning"
+            primaryAction={{ title: 'Continuar jornada', icon: 'compass', onPress: goBack }}
+            secondaryAction={openProfile ? { title: 'Ver perfil', icon: 'person', onPress: openProfile, variant: 'secondary' } : undefined}
+          />
+        ) : null}
         {shopItems.map((item) => {
           const owned = profile.ownedItems.includes(item.id);
           return (

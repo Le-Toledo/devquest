@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActionStateCard } from '../components/ActionStateCard';
 import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
 import { GradientScreen } from '../components/GradientScreen';
@@ -30,7 +31,7 @@ const supabaseNotConfiguredMessage = 'Supabase não configurado. Configure as va
 
 export function LoginScreen({ goBack, openAccount, showBackButton = true }: Props) {
   const { colors } = useSettings();
-  const { configured, signIn, signUp } = useAuth();
+  const { configured, resendConfirmation, signIn, signUp } = useAuth();
   const { updateName } = usePlayer();
   const [mode, setMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
@@ -40,12 +41,14 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
   const [signingIn, setSigningIn] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'error' | 'success' | 'info'>('error');
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState('');
 
-  const busy = signingIn || signingUp || recovering;
+  const busy = signingIn || signingUp || recovering || resendingConfirmation;
   const canSubmit = useMemo(() => {
     if (busy) return false;
     if (mode === 'login') return email.trim().length > 0 && password.length > 0;
@@ -58,6 +61,7 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
     setErrors({});
     setMessage('');
     setMessageTone('error');
+    setPendingConfirmationEmail('');
     setPassword('');
     setConfirmPassword('');
     setShowPassword(false);
@@ -89,6 +93,7 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
     if (result.error) {
       setMessage(result.error);
       setMessageTone('error');
+      if (result.error.includes('Confirme seu e-mail')) setPendingConfirmationEmail(email.trim());
       return;
     }
     if (!result.session) {
@@ -105,7 +110,7 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
     if (!validate()) return;
 
     setSigningUp(true);
-    const result = await signUp(email, password);
+    const result = await signUp(email, password, name);
     setSigningUp(false);
     if (result.error) {
       setMessage(result.error);
@@ -113,10 +118,11 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
       return;
     }
     if (!result.session) {
-      setMessage('Conta criada. Confirme seu e-mail antes de entrar, se o Supabase exigir verificação.');
-      setMessageTone('success');
+      updateName(name);
+      setPendingConfirmationEmail(email.trim());
+      setMessage('Conta criada. Confirme seu e-mail para entrar com segurança.');
+      setMessageTone('info');
       setMode('login');
-      setPassword('');
       setConfirmPassword('');
       return;
     }
@@ -148,6 +154,28 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
       return;
     }
     setMessage('Enviamos as instruções de recuperação para o seu e-mail.');
+    setMessageTone('success');
+  };
+
+  const resendConfirmationEmail = async () => {
+    const targetEmail = pendingConfirmationEmail || email.trim();
+    setMessage('');
+    const next: FieldErrors = {};
+    if (!targetEmail) next.email = 'Informe seu e-mail para reenviar a confirmação.';
+    else if (!isValidEmail(targetEmail)) next.email = 'Digite um e-mail válido para reenviar a confirmação.';
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+
+    setResendingConfirmation(true);
+    const result = await resendConfirmation(targetEmail);
+    setResendingConfirmation(false);
+    if (result.error) {
+      setMessage(result.error);
+      setMessageTone('error');
+      return;
+    }
+    setPendingConfirmationEmail(targetEmail);
+    setMessage('E-mail de confirmação reenviado. Confira sua caixa de entrada e spam.');
     setMessageTone('success');
   };
 
@@ -184,6 +212,17 @@ export function LoginScreen({ goBack, openAccount, showBackButton = true }: Prop
               </View>
               <Text style={[styles.noticeCopy, { color: colors.muted }]}>Configure as variáveis públicas do Supabase para ativar login, cadastro, recuperação e sync. O progresso local continua salvo, mas não libera acesso sem sessão real.</Text>
             </GameCard>
+          ) : null}
+
+          {pendingConfirmationEmail ? (
+            <ActionStateCard
+              title="Confirme seu e-mail para entrar"
+              message={`Enviamos a confirmação para ${pendingConfirmationEmail}. Depois de confirmar, volte aqui e tente entrar com a mesma senha.`}
+              icon="mail-unread"
+              tone="info"
+              primaryAction={{ title: 'Já confirmei, tentar entrar', icon: 'log-in', onPress: submitLogin, loading: signingIn, disabled: busy || !password }}
+              secondaryAction={{ title: 'Reenviar e-mail', icon: 'refresh', onPress: resendConfirmationEmail, loading: resendingConfirmation, disabled: busy }}
+            />
           ) : null}
 
           <GameCard style={{ ...styles.loginCard, borderColor: colors.primary }}>

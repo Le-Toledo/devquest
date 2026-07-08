@@ -1,6 +1,7 @@
 export { GameButton } from './GameButton';
 export { GameCard } from './GameCard';
 export { GradientScreen } from './GradientScreen';
+export { ActionStateCard } from './ActionStateCard';
 export { ProfileHeader } from './ProfileHeader';
 export { ProgressBar } from './ProgressBar';
 export { HomeDashboard } from './HomeDashboard';

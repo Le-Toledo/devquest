@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActionStateCard } from '../components/ActionStateCard';
 import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
 import { GradientScreen } from '../components/GradientScreen';
@@ -10,7 +11,7 @@ import { useSettings } from '../hooks/useSettings';
 import { leaderboardService } from '../services/leaderboardService';
 import { LeaderboardEntry } from '../types/backend';
 
-export function RankingScreen({ goBack }: { goBack: () => void }) {
+export function RankingScreen({ goBack, openProfile }: { goBack: () => void; openProfile?: () => void }) {
   const { colors } = useSettings();
   const { user, configured } = useAuth();
   const { profile } = usePlayer();
@@ -21,7 +22,7 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
   const [error, setError] = useState('');
   const onlineEnabled = Boolean(configured && user);
 
-  useEffect(() => {
+  const loadRanking = useCallback(() => {
     if (!onlineEnabled) return;
     setLoading(true);
     setError('');
@@ -34,6 +35,18 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Não foi possível carregar o ranking online.'))
       .finally(() => setLoading(false));
   }, [onlineEnabled, period]);
+
+  useEffect(() => {
+    loadRanking();
+  }, [loadRanking]);
+
+  const openProfileOrBack = () => {
+    if (openProfile) {
+      openProfile();
+      return;
+    }
+    goBack();
+  };
 
   return (
     <GradientScreen>
@@ -58,24 +71,45 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
           </GameCard>
         ) : null}
 
+        {!onlineEnabled ? (
+          <ActionStateCard
+            title="Ranking online ainda não está ativo"
+            message="Seu ranking local continua funcionando. Para aparecer no ranking global, entre no Perfil e sincronize sua conta."
+            icon="cloud-offline"
+            tone="warning"
+            primaryAction={{ title: 'Ver perfil', icon: 'person', onPress: openProfileOrBack }}
+            secondaryAction={{ title: 'Continuar offline', icon: 'phone-portrait', onPress: goBack, variant: 'secondary' }}
+          />
+        ) : null}
+
         {error ? (
-          <GameCard style={{ borderColor: colors.warning }}>
-            <Text style={[styles.name, { color: colors.text }]}>Ranking online indisponível</Text>
-            <Text style={[styles.meta, { color: colors.muted }]}>{error}</Text>
-          </GameCard>
+          <ActionStateCard
+            title="Ranking online indisponível"
+            message={`${error} Seu progresso local segue salvo, então você pode tentar de novo ou continuar offline.`}
+            icon="warning"
+            tone="error"
+            primaryAction={{ title: 'Tentar novamente', icon: 'refresh', onPress: loadRanking, loading }}
+            secondaryAction={{ title: 'Ver perfil', icon: 'person', onPress: openProfileOrBack, variant: 'secondary' }}
+          />
         ) : null}
 
         {onlineEnabled && !loading && !error && entries.length === 0 ? (
-          <GameCard>
-            <Text style={[styles.name, { color: colors.text }]}>Nenhum dev no ranking ainda</Text>
-            <Text style={[styles.meta, { color: colors.muted }]}>Sincronize sua conta para inaugurar a tabela.</Text>
-          </GameCard>
+          <ActionStateCard
+            title="Nenhum dev no ranking ainda"
+            message="A tabela global está pronta, só falta o primeiro progresso sincronizado. Você pode inaugurar esse placar agora."
+            icon="trophy"
+            tone="info"
+            primaryAction={{ title: 'Ver perfil', icon: 'person', onPress: openProfileOrBack }}
+            secondaryAction={{ title: 'Tentar novamente', icon: 'refresh', onPress: loadRanking, variant: 'secondary' }}
+          />
         ) : null}
 
-        {onlineEnabled && !error
-          ? entries.map((entry, index) => (
-              <RankingCard key={entry.id} place={index + 1} avatar={entry.avatar} name={entry.displayName} xp={entry.xp} level={entry.level} />
-            ))
+        {onlineEnabled
+          ? !loading && !error
+            ? entries.map((entry, index) => (
+                <RankingCard key={entry.id} place={index + 1} avatar={entry.avatar} name={entry.displayName} xp={entry.xp} level={entry.level} />
+              ))
+            : null
           : ranking.map((player, index) => <RankingCard key={player.name} place={index + 1} avatar={player.avatar} name={player.name} xp={player.xp} />)}
       </ScrollView>
     </GradientScreen>
