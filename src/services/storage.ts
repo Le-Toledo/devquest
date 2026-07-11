@@ -64,6 +64,7 @@ const progressStorageKeys = [
   storageKeys.academyProgress,
   storageKeys.campaignProgress,
   storageKeys.codeArena,
+  storageKeys.codeLab,
   storageKeys.localAnalytics,
   storageKeys.player,
   storageKeys.questionSeenHistory,

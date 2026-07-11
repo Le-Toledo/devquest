@@ -3,6 +3,7 @@ export const storageKeys = {
   aiTutorHistory: '@codequest/ai-tutor-history',
   campaignProgress: '@codequest/campaign-progress',
   codeArena: '@codequest/code-arena',
+  codeLab: '@codequest/code-lab',
   localAnalytics: '@codequest/local-analytics',
   onboarding: '@codequest/onboarding',
   player: '@codequest/player',

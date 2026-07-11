@@ -8,7 +8,7 @@ export interface AiTutorMessage {
 }
 
 export interface AiTutorContext {
-  source?: 'general' | 'review' | 'arena' | 'academy' | 'campaign';
+  source?: 'general' | 'review' | 'arena' | 'academy' | 'campaign' | 'codeLab';
   aiMode?: 'hint' | 'explanation' | 'concept' | 'error_help';
   topic?: string;
   language?: string;
@@ -18,6 +18,9 @@ export interface AiTutorContext {
   errorPrompt?: string;
   selectedAnswer?: string;
   correctAnswer?: string;
+  failedValidations?: string[];
+  usedHints?: number;
+  challengePrompt?: string;
 }
 
 export interface AiTutorRequest {

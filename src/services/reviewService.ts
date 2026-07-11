@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Question } from '../types/game';
 import { ReviewError, ReviewPriority, ReviewStats } from '../types/review';
 import { parseArrayOrFallback } from '../utils/jsonStorage';
+import { buildAcademyReviewError, buildArenaReviewError, buildCodeLabReviewError } from './reviewErrorFactory';
 import { storageKeys } from './storageKeys';
 const intervals = [0, 1, 3, 7];
 
@@ -94,6 +95,64 @@ export const reviewService = {
       nextReviewAt: now,
       learnedAt: existing?.learnedAt
     };
+    await this.save([nextError, ...errors.filter((error) => error.id !== id)]);
+    return nextError;
+  },
+  async saveAcademyError(input: {
+    lessonId: string;
+    prompt: string;
+    areaId: ReviewError['areaId'];
+    concept: string;
+    difficulty?: ReviewError['difficulty'];
+    selectedAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    hint: string;
+    codeExample?: string;
+  }) {
+    const errors = await this.load();
+    const id = `academy-${input.lessonId}`;
+    const existing = errors.find((error) => error.id === id);
+    const nextError = buildAcademyReviewError(input, existing);
+    await this.save([nextError, ...errors.filter((error) => error.id !== id)]);
+    return nextError;
+  },
+  async saveArenaError(input: {
+    challengeId: string;
+    prompt: string;
+    areaId: ReviewError['areaId'];
+    concept: string;
+    difficulty: ReviewError['difficulty'];
+    selectedAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    hint: string;
+    codeExample?: string;
+  }) {
+    const errors = await this.load();
+    const id = `arena-${input.challengeId}`;
+    const existing = errors.find((error) => error.id === id);
+    const nextError = buildArenaReviewError(input, existing);
+    await this.save([nextError, ...errors.filter((error) => error.id !== id)]);
+    return nextError;
+  },
+  async saveCodeLabError(input: {
+    challengeId: string;
+    prompt: string;
+    areaId: ReviewError['areaId'];
+    concept: string;
+    difficulty: ReviewError['difficulty'];
+    selectedAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    hint: string;
+    codeExample?: string;
+    failedValidation?: string;
+  }) {
+    const errors = await this.load();
+    const id = `code-lab-${input.challengeId}`;
+    const existing = errors.find((error) => error.id === id);
+    const nextError = buildCodeLabReviewError(input, existing);
     await this.save([nextError, ...errors.filter((error) => error.id !== id)]);
     return nextError;
   },

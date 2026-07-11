@@ -13,6 +13,8 @@ export type AppRoute =
   | { name: 'lesson'; lessonId: string }
   | { name: 'codeArena' }
   | { name: 'codeChallenge'; challengeId: string; challengeIds?: string[] }
+  | { name: 'codeLab'; initialConcept?: string }
+  | { name: 'codeLabChallenge'; challengeId: string; returnTo?: AppRoute }
   | { name: 'map' }
   | { name: 'quiz'; stage: Stage }
   | { name: 'profile' }

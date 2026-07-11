@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ErrorReviewCard } from '../components/ErrorReviewCard';
 import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
@@ -14,6 +14,27 @@ import { reviewService } from '../services/reviewService';
 import { localAnalyticsService } from '../services/localAnalyticsService';
 import { ReviewError } from '../types/review';
 import { Navigate } from '../navigation/routes';
+import { AreaId } from '../types/game';
+
+type SourceFilter = 'todas' | ReviewError['source'];
+type PriorityFilter = 'todas' | ReviewError['priority'];
+
+const sourceLabels: Record<SourceFilter, string> = {
+  todas: 'Todas',
+  quiz: 'Quiz',
+  campaign: 'Campanha',
+  academy: 'Academia',
+  arena: 'Arena',
+  codeLab: 'Laboratório'
+};
+
+const priorityLabels: Record<PriorityFilter, string> = {
+  todas: 'Todas',
+  today: 'Hoje',
+  tomorrow: 'Amanhã',
+  'three-days': 'Três dias',
+  'seven-days': 'Sete dias'
+};
 
 export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navigate: Navigate }) {
   const { colors } = useSettings();
@@ -21,7 +42,21 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
   const { errors, setErrors, stats } = useReview();
   const [selected, setSelected] = useState<ReviewError | null>(null);
   const [lastResult, setLastResult] = useState<'correct' | 'wrong' | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('todas');
+  const [languageFilter, setLanguageFilter] = useState<AreaId | 'todas'>('todas');
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('todas');
   const dueToday = errors.filter((error) => !error.learnedAt && error.priority === 'today').length;
+  const sourceCounts = errors.reduce<Record<ReviewError['source'], number>>(
+    (acc, error) => ({ ...acc, [error.source]: (acc[error.source] ?? 0) + 1 }),
+    { quiz: 0, campaign: 0, academy: 0, arena: 0, codeLab: 0 }
+  );
+  const languageOptions = Array.from(new Set(errors.map((error) => error.areaId)));
+  const filteredErrors = errors.filter((error) => {
+    const sourceMatches = sourceFilter === 'todas' || error.source === sourceFilter;
+    const languageMatches = languageFilter === 'todas' || error.areaId === languageFilter;
+    const priorityMatches = priorityFilter === 'todas' || error.priority === priorityFilter;
+    return sourceMatches && languageMatches && priorityMatches;
+  });
 
   const markLearned = async (errorId: string) => {
     const next = await reviewService.markLearned(errorId);
@@ -52,6 +87,7 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
   };
 
   if (selected) {
+    const canOpenRelated = selected.source === 'academy' || selected.source === 'arena' || selected.source === 'codeLab';
     return (
       <GradientScreen>
         <ScrollView contentContainerStyle={styles.container}>
@@ -62,6 +98,20 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
             <Text style={[styles.subtitle, { color: colors.muted }]}>Professor Byte vai desmontar esse bug em partes pequenas.</Text>
           </GameCard>
           <MentorExplanation error={selected} simplified={lastResult === 'wrong'} />
+          {canOpenRelated ? (
+            <GameButton
+              title={selected.source === 'academy' ? 'Voltar para a aula' : selected.source === 'codeLab' ? 'Abrir Laboratório de Código' : 'Abrir desafio da Arena'}
+              icon={selected.source === 'academy' ? 'school' : selected.source === 'codeLab' ? 'terminal' : 'code-slash'}
+              variant="secondary"
+              onPress={() =>
+                selected.source === 'academy'
+                  ? navigate({ name: 'lesson', lessonId: selected.sourceId })
+                  : selected.source === 'codeLab'
+                    ? navigate({ name: 'codeLabChallenge', challengeId: selected.sourceId, returnTo: { name: 'reviewLab' } })
+                  : navigate({ name: 'codeChallenge', challengeId: selected.sourceId, challengeIds: [selected.sourceId] })
+              }
+            />
+          ) : null}
           <GameButton
             title="Perguntar ao Professor Byte"
             icon="chatbubbles"
@@ -148,13 +198,54 @@ export function ReviewLabScreen({ goBack, navigate }: { goBack: () => void; navi
           </GameCard>
         ) : null}
 
+        <GameCard>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Filtros</Text>
+          <View style={styles.filterRow}>
+            {(['todas', 'quiz', 'campaign', 'academy', 'arena', 'codeLab'] satisfies SourceFilter[]).map((item) => (
+              <Pressable
+                key={item}
+                accessibilityRole="button"
+                accessibilityState={{ selected: sourceFilter === item }}
+                onPress={() => setSourceFilter(item)}
+                style={[styles.filterPill, { borderColor: sourceFilter === item ? colors.primary : colors.border, backgroundColor: sourceFilter === item ? colors.primary : colors.surfaceGlow }]}
+              >
+                <Text style={[styles.filterText, { color: sourceFilter === item ? colors.onAccent : colors.text }]}>
+                  {sourceLabels[item]}{item !== 'todas' ? ` ${sourceCounts[item]}` : ''}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.filterRow}>
+            <Pressable accessibilityRole="button" onPress={() => setLanguageFilter('todas')} style={[styles.filterPill, { borderColor: languageFilter === 'todas' ? colors.primary : colors.border, backgroundColor: languageFilter === 'todas' ? colors.primary : colors.surfaceGlow }]}>
+              <Text style={[styles.filterText, { color: languageFilter === 'todas' ? colors.onAccent : colors.text }]}>Todas linguagens</Text>
+            </Pressable>
+            {languageOptions.map((item) => (
+              <Pressable key={item} accessibilityRole="button" accessibilityState={{ selected: languageFilter === item }} onPress={() => setLanguageFilter(item)} style={[styles.filterPill, { borderColor: languageFilter === item ? colors.primary : colors.border, backgroundColor: languageFilter === item ? colors.primary : colors.surfaceGlow }]}>
+                <Text style={[styles.filterText, { color: languageFilter === item ? colors.onAccent : colors.text }]}>{item}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.filterRow}>
+            {(['todas', 'today', 'tomorrow', 'three-days', 'seven-days'] satisfies PriorityFilter[]).map((item) => (
+              <Pressable key={item} accessibilityRole="button" accessibilityState={{ selected: priorityFilter === item }} onPress={() => setPriorityFilter(item)} style={[styles.filterPill, { borderColor: priorityFilter === item ? colors.primary : colors.border, backgroundColor: priorityFilter === item ? colors.primary : colors.surfaceGlow }]}>
+                <Text style={[styles.filterText, { color: priorityFilter === item ? colors.onAccent : colors.text }]}>{priorityLabels[item]}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </GameCard>
+
         {errors.length === 0 ? (
           <GameCard>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Nenhum erro salvo ainda</Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Quando você errar quizzes ou missões de campanha, eles aparecerão aqui para revisão inteligente.</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Quando você errar quizzes, aulas, campanhas ou desafios da Arena, eles aparecerão aqui para revisão inteligente.</Text>
+          </GameCard>
+        ) : filteredErrors.length === 0 ? (
+          <GameCard>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Nenhuma revisão para este filtro</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>Troque a origem, linguagem ou prioridade para ver outros pontos salvos.</Text>
           </GameCard>
         ) : (
-          errors.map((error) => <ErrorReviewCard key={error.id} error={error} onReview={() => setSelected(error)} onLearned={() => markLearned(error.id)} />)
+          filteredErrors.map((error) => <ErrorReviewCard key={error.id} error={error} onReview={() => setSelected(error)} onLearned={() => markLearned(error.id)} />)
         )}
       </ScrollView>
     </GradientScreen>
@@ -177,5 +268,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: '900' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   actionButton: { flexBasis: 132, flexGrow: 1 },
-  inlineButton: { marginTop: 14 }
+  inlineButton: { marginTop: 14 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  filterPill: { minHeight: 48, borderRadius: 999, borderWidth: 1, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center' },
+  filterText: { fontSize: 12, lineHeight: 15, fontWeight: '900', textTransform: 'uppercase' }
 });

@@ -12,9 +12,11 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 };
 
-export function GameButton({ title, icon, variant = 'primary', onPress, disabled, loading, style }: Props) {
+export function GameButton({ title, icon, variant = 'primary', onPress, disabled, loading, style, accessibilityLabel, accessibilityHint }: Props) {
   const { colors } = useSettings();
   const background =
     variant === 'primary' ? colors.primary : variant === 'danger' ? colors.danger : variant === 'ghost' ? 'transparent' : colors.surfaceGlow;
@@ -28,7 +30,8 @@ export function GameButton({ title, icon, variant = 'primary', onPress, disabled
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: Boolean(disabled || loading), busy: Boolean(loading) }}
       onPress={handlePress}
       disabled={disabled || loading}

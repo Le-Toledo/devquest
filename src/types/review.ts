@@ -4,7 +4,7 @@ export type ReviewPriority = 'today' | 'tomorrow' | 'three-days' | 'seven-days';
 
 export interface ReviewError {
   id: string;
-  source: 'quiz' | 'campaign';
+  source: 'quiz' | 'campaign' | 'academy' | 'arena' | 'codeLab';
   sourceId: string;
   prompt: string;
   areaId: AreaId;
@@ -15,6 +15,7 @@ export interface ReviewError {
   explanation: string;
   hint: string;
   codeExample?: string;
+  failedValidation?: string;
   wrongCount: number;
   correctReviewCount: number;
   intervalDays: number;

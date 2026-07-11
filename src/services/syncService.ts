@@ -1,7 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { academyProgressService, defaultAcademyProgress } from './academyProgressService';
+import { mergeAcademyProgress, normalizeAcademyProgress } from './academyProgressRules';
 import { campaignProgressService, defaultCampaignProgress } from './campaignProgressService';
 import { codeArenaService, defaultCodeArenaProgress } from './codeArenaService';
+import { codeLabService, defaultCodeLabProgress } from './codeLabService';
+import { mergeCodeLabProgress, normalizeCodeLabProgress } from './codeLabProgressRules';
 import { defaultLocalAnalytics, localAnalyticsService } from './localAnalyticsService';
 import { reviewService } from './reviewService';
 import { createDefaultPlayer, storage } from './storage';
@@ -45,8 +48,6 @@ const progressScore = (progress: CloudProgress) =>
   (progress.campaign?.completedMissionIds.length ?? 0) * 120 +
   (progress.player.achievements.length ?? 0) * 50;
 
-const isDefaultish = (progress: CloudProgress) => progressScore(progress) <= progress.player.coins + 1 && Object.keys(progress.player.completedStages).length === 0;
-
 const loadLastSyncAt = async () => AsyncStorage.getItem(storageKeys.cloudSyncAt);
 const saveLastSyncAt = async (value: string) => AsyncStorage.setItem(storageKeys.cloudSyncAt, value);
 
@@ -78,8 +79,9 @@ const toCloudProgress = (row: PlayerProgressRow): CloudProgress => {
     ...saved,
     player,
     campaign: saved?.campaign ?? defaultCampaignProgress,
-    academy: saved?.academy ?? defaultAcademyProgress,
+    academy: normalizeAcademyProgress(saved?.academy ?? defaultAcademyProgress),
     arena: saved?.arena ?? defaultCodeArenaProgress,
+    codeLab: normalizeCodeLabProgress(saved?.codeLab ?? defaultCodeLabProgress),
     reviewErrors: saved?.reviewErrors ?? [],
     streak: row.streak ?? saved?.streak ?? defaultStreakState,
     localAnalytics: saved?.localAnalytics ?? defaultLocalAnalytics,
@@ -101,10 +103,21 @@ const cloudToRow = (progress: CloudProgress) => ({
   updated_at: progress.updatedAt
 });
 
-const shouldUseCloud = (local: CloudProgress, cloud: CloudProgress, lastSyncAt: string | null) => {
-  if (isDefaultish(local)) return true;
-  if (!lastSyncAt) return progressScore(cloud) > progressScore(local);
-  return new Date(cloud.updatedAt).getTime() > new Date(lastSyncAt).getTime();
+const mergeProgress = (local: CloudProgress, cloud: CloudProgress): CloudProgress => {
+  const localWins = progressScore(local) >= progressScore(cloud);
+  const base = localWins ? local : cloud;
+  return {
+    ...base,
+    userId: local.userId,
+    player: normalizePlayer(localWins ? local.player : cloud.player),
+    academy: mergeAcademyProgress(local.academy, cloud.academy),
+    codeLab: mergeCodeLabProgress(local.codeLab, cloud.codeLab),
+    reviewErrors: [
+      ...(local.reviewErrors ?? []),
+      ...(cloud.reviewErrors ?? []).filter((cloudError) => !(local.reviewErrors ?? []).some((localError) => localError.id === cloudError.id))
+    ],
+    updatedAt: latestIso()
+  };
 };
 
 export const syncService = {
@@ -115,8 +128,9 @@ export const syncService = {
       userId: user.id,
       player: { ...player, selectedTheme: theme as ThemeMode },
       campaign: await campaignProgressService.load(),
-      academy: await academyProgressService.load(),
+      academy: normalizeAcademyProgress(await academyProgressService.load()),
       arena: await codeArenaService.load(),
+      codeLab: normalizeCodeLabProgress(await codeLabService.load()),
       reviewErrors: await reviewService.load(),
       streak: await streakService.load(),
       localAnalytics: await localAnalyticsService.load(),
@@ -129,8 +143,9 @@ export const syncService = {
     const player = normalizePlayer(progress.player);
     await storage.savePlayer(player);
     await campaignProgressService.save(progress.campaign ?? defaultCampaignProgress);
-    await academyProgressService.save(progress.academy ?? defaultAcademyProgress);
+    await academyProgressService.save(normalizeAcademyProgress(progress.academy ?? defaultAcademyProgress));
     await codeArenaService.save(progress.arena ?? defaultCodeArenaProgress);
+    await codeLabService.save(normalizeCodeLabProgress(progress.codeLab ?? defaultCodeLabProgress));
     await reviewService.save(progress.reviewErrors ?? []);
     await streakService.save(progress.streak ?? defaultStreakState);
     await localAnalyticsService.save(progress.localAnalytics ?? defaultLocalAnalytics);
@@ -143,6 +158,8 @@ export const syncService = {
     const normalized: CloudProgress = {
       ...progress,
       player: normalizePlayer(progress.player),
+      academy: normalizeAcademyProgress(progress.academy ?? defaultAcademyProgress),
+      codeLab: normalizeCodeLabProgress(progress.codeLab ?? defaultCodeLabProgress),
       updatedAt: progress.updatedAt || latestIso()
     };
 
@@ -174,8 +191,7 @@ export const syncService = {
       }
 
       const cloud = toCloudProgress(row);
-      const lastSyncAt = await loadLastSyncAt();
-      const selected = shouldUseCloud(local, cloud, lastSyncAt) ? cloud : { ...local, updatedAt: latestIso() };
+      const selected = mergeProgress(local, cloud);
 
       await this.applyLocalProgress(selected);
       return this.upsertProgress(selected);
@@ -215,6 +231,7 @@ export const syncService = {
       campaign: defaultCampaignProgress,
       academy: defaultAcademyProgress,
       arena: defaultCodeArenaProgress,
+      codeLab: defaultCodeLabProgress,
       reviewErrors: [],
       streak: defaultStreakState,
       localAnalytics: defaultLocalAnalytics,

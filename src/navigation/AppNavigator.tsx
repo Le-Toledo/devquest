@@ -7,6 +7,8 @@ import {
   CareerScreen,
   CodeArenaScreen,
   CodeChallengeScreen,
+  CodeLabChallengeScreen,
+  CodeLabScreen,
   CampaignScreen,
   DailyRewardScreen,
   HomeScreen,
@@ -130,6 +132,8 @@ export function AppNavigator() {
   if (route.name === 'lesson') return withToast(<LessonScreen lessonId={route.lessonId} navigate={setRoute} goBack={() => setRoute({ name: 'academy' })} />);
   if (route.name === 'codeArena') return withToast(<CodeArenaScreen navigate={setRoute} goBack={goHome} />);
   if (route.name === 'codeChallenge') return withToast(<CodeChallengeScreen challengeId={route.challengeId} challengeIds={route.challengeIds} goBack={() => setRoute({ name: 'codeArena' })} />);
+  if (route.name === 'codeLab') return withToast(<CodeLabScreen navigate={setRoute} goBack={goHome} initialConcept={route.initialConcept} />);
+  if (route.name === 'codeLabChallenge') return withToast(<CodeLabChallengeScreen challengeId={route.challengeId} navigate={setRoute} goBack={() => setRoute(route.returnTo ?? { name: 'codeLab' })} />);
   if (route.name === 'quiz') return withToast(<QuizScreen stage={route.stage} navigate={setRoute} goBack={() => setRoute({ name: 'map' })} />);
   if (route.name === 'profile') return withToast(<ProfileScreen navigate={setRoute} goBack={goHome} />);
   if (route.name === 'professorByte') return withToast(<ProfessorByteScreen goBack={() => setRoute(route.returnTo ?? { name: 'home' })} initialPrompt={route.initialPrompt} context={route.context} />);

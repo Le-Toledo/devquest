@@ -3,6 +3,7 @@ import { PlayerProfile, ThemeMode } from './game';
 import { AcademyProgress } from './academy';
 import { CampaignProgress } from './campaign';
 import { CodeArenaProgress } from './codeArena';
+import { CodeLabProgress } from './codeLab';
 import { ReviewError } from './review';
 import { StreakState } from '../services/streakService';
 import { LocalAnalytics } from '../services/localAnalyticsService';
@@ -26,6 +27,7 @@ export interface CloudProgress {
   campaign?: CampaignProgress;
   academy?: AcademyProgress;
   arena?: CodeArenaProgress;
+  codeLab?: CodeLabProgress;
   reviewErrors?: ReviewError[];
   streak?: StreakState;
   localAnalytics?: LocalAnalytics;

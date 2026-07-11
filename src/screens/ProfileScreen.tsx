@@ -19,6 +19,8 @@ import { ReviewError } from '../types/review';
 import { AcademyProgress } from '../types/academy';
 import { codeArenaService, defaultCodeArenaProgress } from '../services/codeArenaService';
 import { CodeArenaProgress } from '../types/codeArena';
+import { codeLabService, defaultCodeLabProgress } from '../services/codeLabService';
+import { CodeLabProgress } from '../types/codeLab';
 import { defaultStreakState, streakService, StreakState } from '../services/streakService';
 import { defaultLocalAnalytics, localAnalyticsService, LocalAnalytics } from '../services/localAnalyticsService';
 import { syncService } from '../services/syncService';
@@ -34,6 +36,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
   const [reviewErrors, setReviewErrors] = useState<ReviewError[]>([]);
   const [academyProgress, setAcademyProgress] = useState<AcademyProgress>(defaultAcademyProgress);
   const [arenaProgress, setArenaProgress] = useState<CodeArenaProgress>(defaultCodeArenaProgress);
+  const [codeLabProgress, setCodeLabProgress] = useState<CodeLabProgress>(defaultCodeLabProgress);
   const [streak, setStreak] = useState<StreakState>(defaultStreakState);
   const [analytics, setAnalytics] = useState<LocalAnalytics>(defaultLocalAnalytics);
   const [syncing, setSyncing] = useState(false);
@@ -74,6 +77,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
     setReviewErrors([]);
     setAcademyProgress(defaultAcademyProgress);
     setArenaProgress(defaultCodeArenaProgress);
+    setCodeLabProgress(defaultCodeLabProgress);
     setStreak(defaultStreakState);
     setAnalytics(defaultLocalAnalytics);
     setSyncResult(null);
@@ -138,6 +142,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
     reviewService.load().then(setReviewErrors).catch(() => undefined);
     academyProgressService.load().then(setAcademyProgress).catch(() => undefined);
     codeArenaService.load().then(setArenaProgress).catch(() => undefined);
+    codeLabService.load().then(setCodeLabProgress).catch(() => undefined);
     streakService.load().then(setStreak).catch(() => undefined);
     localAnalyticsService.load().then(setAnalytics).catch(() => undefined);
   }, []);
@@ -162,6 +167,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
 
   const reviewStats = reviewService.stats(reviewErrors);
   const academyStats = academyProgressService.stats(academyProgress);
+  const codeLabStats = codeLabService.stats(codeLabProgress);
   const favoritePath = academyProgress.favoritePathId ? learningPathById(academyProgress.favoritePathId)?.title : undefined;
   const syncStatus = syncResult?.message ?? (user ? 'Pronto para sincronizar.' : 'Sessão necessária para backup e ranking online.');
 
@@ -227,6 +233,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
             <ProfileMetric label="Missões" value={localProgress?.campaign?.completedMissionIds.length ?? campaignProgress.completedMissionIds.length} />
             <ProfileMetric label="Aulas" value={localProgress?.academy?.completedLessonIds.length ?? academyProgress.completedLessonIds.length} />
             <ProfileMetric label="Arena" value={localProgress?.arena?.completedChallengeIds.length ?? arenaProgress.completedChallengeIds.length} />
+            <ProfileMetric label="Lab Código" value={localProgress?.codeLab?.completedChallengeIds.length ?? codeLabProgress.completedChallengeIds.length} />
             <ProfileMetric label="Revisões" value={localProgress?.reviewErrors?.length ?? reviewErrors.length} />
           </View>
           <View style={styles.cardAction}>
@@ -282,6 +289,15 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
         </GameCard>
 
         <GameCard>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Laboratório de Código</Text>
+          <Text style={[styles.metric, { color: colors.muted }]}>Desafios concluídos: {codeLabStats.completed}/{codeLabStats.total}</Text>
+          <Text style={[styles.metric, { color: colors.muted }]}>Linguagem mais praticada: {codeLabProgress.favoriteLanguage ?? 'nenhuma ainda'}</Text>
+          <Text style={[styles.metric, { color: colors.muted }]}>Taxa de conclusão: {Math.round(codeLabStats.ratio * 100)}%</Text>
+          <Text style={[styles.metric, { color: colors.muted }]}>Melhor sequência: {codeLabProgress.bestStreak}</Text>
+          <Text style={[styles.metric, { color: colors.muted }]}>Minutos praticados: {codeLabProgress.totalPracticeMinutes}</Text>
+        </GameCard>
+
+        <GameCard>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Arena de Código</Text>
           <Text style={[styles.metric, { color: colors.muted }]}>Desafios práticos concluídos: {arenaProgress.completedChallengeIds.length}</Text>
           <Text style={[styles.metric, { color: colors.muted }]}>Para revisar: {arenaProgress.reviewChallengeIds.length}</Text>
@@ -321,6 +337,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
         <GameButton title="Ir para o mapa" icon="map" onPress={() => navigate({ name: 'map' })} />
         <GameButton title="Academia Dev" icon="school" variant="secondary" onPress={() => navigate({ name: 'academy' })} />
         <GameButton title="Arena de Código" icon="code-slash" variant="secondary" onPress={() => navigate({ name: 'codeArena' })} />
+        <GameButton title="Laboratório de Código" icon="terminal" variant="secondary" onPress={() => navigate({ name: 'codeLab' })} />
         <GameButton title="Abrir campanha" icon="compass" variant="secondary" onPress={() => navigate({ name: 'campaign' })} />
         <GameButton title="Laboratório de Revisão" icon="flask" variant="secondary" onPress={() => navigate({ name: 'reviewLab' })} />
       </ScrollView>

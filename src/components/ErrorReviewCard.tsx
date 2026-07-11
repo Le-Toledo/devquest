@@ -13,6 +13,14 @@ const priorityLabels: Record<ReviewError['priority'], string> = {
   'seven-days': 'Revisar em 7 dias'
 };
 
+const sourceLabels: Record<ReviewError['source'], string> = {
+  quiz: 'Quiz',
+  campaign: 'Campanha',
+  academy: 'Academia Dev',
+  arena: 'Arena',
+  codeLab: 'Laboratório de Código'
+};
+
 export function ErrorReviewCard({
   error,
   onReview,
@@ -35,7 +43,7 @@ export function ErrorReviewCard({
         <View style={styles.info}>
           <Text style={[styles.title, { color: colors.text }]}>{error.prompt}</Text>
           <Text style={[styles.meta, { color: colors.muted }]}>
-            {areaName(error.areaId)} • {error.concept} • {error.difficulty}
+            {sourceLabels[error.source]} • {areaName(error.areaId)} • {error.concept} • {error.difficulty}
           </Text>
         </View>
       </View>
