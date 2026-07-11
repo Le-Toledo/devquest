@@ -107,7 +107,6 @@ export function QuizScreen({ stage, navigate, goBack }: { stage: Stage; navigate
 
   const askHint = async () => {
     if (!current || loadingHint) return;
-    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
     setShowHint(true);
     setLoadingHint(true);
     try {

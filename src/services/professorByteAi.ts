@@ -33,10 +33,6 @@ export type ProfessorByteResult = {
 export const PROFESSOR_BYTE_FALLBACK =
   'Não consegui acessar o Professor Byte agora, mas aqui vai uma dica: leia a pergunta com calma, identifique o conceito principal e elimine as alternativas que não fazem sentido.';
 
-const devLog = (message: string, details?: unknown) => {
-  if (__DEV__) console.log(`[ProfessorByteAI] ${message}`, details ?? '');
-};
-
 const devWarn = (message: string, error?: unknown) => {
   if (__DEV__) console.warn(`[ProfessorByteAI] ${message}`, error);
 };
@@ -58,7 +54,6 @@ const modeFromContext = (message: string, context?: AiTutorContext): ProfessorBy
 
 export const professorByteAi = {
   async buildPayload(message: string, context?: AiTutorContext): Promise<ProfessorBytePayload> {
-    devLog('Preparando payload');
     const player = await storage.loadPlayer();
     const mode = modeFromContext(message, context);
     return {
@@ -95,7 +90,6 @@ export const professorByteAi = {
       }
 
       const body = await this.buildPayload(message, context);
-      devLog('Chamando Edge Function professor-byte-ai', { mode: body.mode, source: body.source });
       const { data, error } = await supabase.functions.invoke('professor-byte-ai', {
         body,
         headers: {
@@ -113,7 +107,6 @@ export const professorByteAi = {
         return { answer: PROFESSOR_BYTE_FALLBACK, mode: 'fallback', warning: 'Professor Byte offline' };
       }
 
-      devLog('Resposta recebida');
       return { answer, mode: 'remote' };
     } catch (error) {
       devWarn('Erro ao chamar IA', error);

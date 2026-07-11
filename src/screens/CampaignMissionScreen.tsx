@@ -88,7 +88,6 @@ export function CampaignMissionScreen({
 
   const askByteHint = async () => {
     if (!current || loadingHelp) return;
-    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
     setShowHelp(true);
     setLoadingHelp(true);
     try {

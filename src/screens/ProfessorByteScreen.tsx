@@ -43,7 +43,6 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
   const send = async (text = input) => {
     const content = text.trim();
     if (!content || loading) return;
-    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
     setInput('');
     setLoading(true);
     const userMessage = aiTutorService.createUserMessage(content);
