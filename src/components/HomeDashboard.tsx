@@ -1,7 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { codeLabChallenges } from '../data/codeLabChallenges';
 import { useAuth } from '../hooks/useAuth';
+import { useCodeLab } from '../hooks/useCodeLab';
 import { usePlayer } from '../hooks/usePlayer';
+import { useReview } from '../hooks/useReview';
 import { useSettings } from '../hooks/useSettings';
 import { Navigate } from '../navigation/routes';
 import { StreakState } from '../services/streakService';
@@ -21,17 +25,25 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
   const { colors } = useSettings();
   const { user } = useAuth();
   const { profile } = usePlayer();
+  const { progress: codeLabProgress } = useCodeLab();
+  const { stats: reviewStats } = useReview();
   const completedStages = Object.keys(profile.completedStages).length;
   const weekProgress = Math.min(1, streak.currentStreak / 7);
   const syncColor = user ? colors.success : colors.warning;
+  const codeLabRecommendation = useMemo(() => {
+    const hardConcept = reviewStats.hardestConcepts[0]?.label.toLowerCase();
+    return codeLabChallenges.find((challenge) => hardConcept && challenge.concept.toLowerCase().includes(hardConcept))
+      ?? codeLabChallenges.find((challenge) => challenge.id === codeLabProgress.currentChallengeId)
+      ?? codeLabChallenges[0];
+  }, [codeLabProgress.currentChallengeId, reviewStats.hardestConcepts]);
 
   const modeTiles: ModeTile[] = [
     { title: 'Campanha', subtitle: 'História guiada', icon: 'compass', tone: 'primary', onPress: () => navigate({ name: 'campaign' }) },
     { title: 'Academia Dev', subtitle: 'Aulas e base', icon: 'school', tone: 'secondary', onPress: () => navigate({ name: 'academy' }) },
     { title: 'Arena de Código', subtitle: 'Desafios práticos', icon: 'code-slash', tone: 'accent', onPress: () => navigate({ name: 'codeArena' }) },
+    { title: 'Laboratório de Código', subtitle: 'Escrita e validação', icon: 'terminal', tone: 'primary', onPress: () => navigate({ name: 'codeLab' }) },
     { title: 'Laboratório', subtitle: 'Treino com erros', icon: 'flask', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
     { title: 'Conquistas', subtitle: 'Metas e recompensas', icon: 'trophy', tone: 'success', onPress: () => navigate({ name: 'achievements' }) },
-    { title: 'Perfil', subtitle: 'Estatísticas', icon: 'person-circle', tone: 'secondary', onPress: () => navigate({ name: 'profile' }) },
     { title: 'Loja', subtitle: 'Itens e moedas', icon: 'storefront', tone: 'accent', onPress: () => navigate({ name: 'shop' }) },
     { title: 'Premium', subtitle: 'Benefícios', icon: 'diamond', tone: 'premium', onPress: () => navigate({ name: 'premium' }) }
   ];
@@ -87,16 +99,10 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
         <InfoChip label="Nível" value={profile.level} color={colors.primary} />
         <InfoChip label="XP" value={profile.xp} color={colors.secondary} />
         <InfoChip label="Moedas" value={profile.coins} color={colors.accent} />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Abrir perfil e sincronização"
-          onPress={() => navigate({ name: 'profile' })}
-          hitSlop={6}
-          style={({ pressed }) => [styles.syncChip, { borderColor: syncColor, backgroundColor: colors.surfaceSoft, opacity: pressed ? 0.75 : 1 }]}
-        >
+        <View style={[styles.syncChip, { borderColor: syncColor, backgroundColor: colors.surfaceSoft }]}>
           <Ionicons name={user ? 'cloud-done' : 'cloud-offline'} size={12} color={syncColor} />
           <Text style={[styles.syncText, { color: syncColor }]}>{user ? 'Sync' : 'Local'}</Text>
-        </Pressable>
+        </View>
       </View>
 
       <GameCard style={{ ...styles.journeyCard, borderColor: colors.primary }}>
@@ -109,6 +115,24 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
           <GameButton title="Entrar" icon="arrow-forward" onPress={() => navigate({ name: 'campaign' })} style={styles.primaryAction} />
         </View>
       </GameCard>
+
+      {codeLabRecommendation ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Continuar no Laboratório de Código"
+          onPress={() => navigate({ name: 'codeLabChallenge', challengeId: codeLabRecommendation.id, returnTo: { name: 'home' } })}
+          style={({ pressed }) => [styles.labBar, { backgroundColor: colors.surfaceSoft, borderColor: colors.primary, opacity: pressed ? 0.76 : 1 }]}
+        >
+          <View style={[styles.byteIcon, { borderColor: colors.primary, backgroundColor: colors.surfaceGlow }]}>
+            <Ionicons name="terminal" size={16} color={colors.primary} />
+          </View>
+          <View style={styles.labCopy}>
+            <Text style={[styles.byteText, { color: colors.text }]}>Continuar no Lab</Text>
+            <Text style={[styles.byteMeta, { color: colors.muted }]} numberOfLines={1}>{codeLabRecommendation.language} • {codeLabRecommendation.concept}</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+        </Pressable>
+      ) : null}
 
       <Pressable
         accessibilityRole="button"
@@ -209,6 +233,8 @@ const styles = StyleSheet.create({
   byteIcon: { width: 28, height: 28, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   byteText: { fontSize: 13, lineHeight: 16, fontWeight: '900' },
   byteMeta: { flex: 1, fontSize: 11, lineHeight: 14, fontWeight: '700' },
+  labBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10 },
+  labCopy: { flex: 1 },
   progressCard: { padding: 12 },
   progressHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 },
   sectionTitle: { fontSize: 16, lineHeight: 20, fontWeight: '900' },
