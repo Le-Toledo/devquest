@@ -1,4 +1,4 @@
-import { AcademyModule, Lesson, QuickChallenge } from '../types/academy';
+import { AcademyModule, Lesson, LessonExercise, LessonProfessionalExample, QuickChallenge } from '../types/academy';
 
 type LessonLevel = NonNullable<Lesson['level']>;
 
@@ -340,6 +340,57 @@ const guidedExerciseFor = (concept: string) =>
 const challengeFor = (concept: string) =>
   `Crie um novo exemplo usando ${concept} em outro contexto, como feira, escola, transporte ou finanças pessoais. Não copie o exemplo da aula.`;
 
+const professionalExampleFor = (label: string, concept: string, objective: string, code?: string): LessonProfessionalExample => ({
+  scenario: pt(`Cenario profissional: imagine uma equipe mantendo um produto de ${label} usado por clientes reais. A tarefa e ${objective.toLowerCase()} sem quebrar telas, dados salvos ou fluxos que ja funcionam em producao.`),
+  code,
+  walkthrough: pt(`Primeiro identifique a regra central de ${concept} e escreva um exemplo minimo. Depois aplique essa regra ao contexto de ${label}, nomeando entradas, saidas e caso de erro. Por fim, revise se o exemplo continua compreensivel para outra pessoa do time abrir um pull request, testar a mudanca e explicar a decisao.`)
+});
+
+const progressiveExercisesFor = (id: string, label: string, concept: string, objective: string, expectedResult: string): LessonExercise[] => [
+  {
+    id: `${id}-aquecimento`,
+    level: 'aquecimento',
+    title: 'Aquecimento guiado',
+    prompt: pt(`Reescreva com suas palavras o objetivo "${objective}" e liste duas entradas que uma pessoa dev receberia em um projeto de ${label}.`),
+    acceptanceCriteria: [
+      pt(`Citou ${concept} explicitamente na explicacao.`),
+      'Separou entrada, regra e resultado esperado.'
+    ],
+    solution: pt(`Uma boa resposta explica ${concept} com uma frase propria, aponta entradas reais e fecha com o resultado esperado antes de escrever codigo.`),
+    hint: pt(`Comece identificando o dado ou decisao que ${concept} controla nesta aula.`),
+    expectedOutput: pt(`Um paragrafo curto explicando ${concept} e uma lista com duas entradas reais.`),
+    reviewConcept: concept
+  },
+  {
+    id: `${id}-pratica`,
+    level: 'pratica',
+    title: 'Prática aplicada',
+    prompt: pt(`Adapte o exemplo da aula para um caso diferente de ${label}, mudando nomes, dados e pelo menos uma regra para mostrar que voce entendeu ${concept}.`),
+    acceptanceCriteria: [
+      'Usou nomes específicos do novo domínio escolhido.',
+      'Incluiu um caso feliz e um caso de borda para conferir a regra.'
+    ],
+    solution: pt(`A solucao deve reaproveitar a ideia de ${concept}, mas trocar dominio, nomes e dados. Se o exemplo ainda parece copia literal da aula, refaca a modelagem.`),
+    hint: pt(`Escolha um contexto simples de ${label} e escreva primeiro o caso feliz, depois um limite que poderia quebrar.`),
+    expectedOutput: expectedResult,
+    reviewConcept: concept
+  },
+  {
+    id: `${id}-desafio`,
+    level: 'desafio',
+    title: 'Desafio profissional',
+    prompt: pt(`Prepare uma resposta como se fosse comentar em um pull request: explique a decisao tecnica, o risco evitado e como testar ${concept} em ${label}.`),
+    acceptanceCriteria: [
+      'Explicou o motivo técnico antes da sintaxe.',
+      'Descreveu um teste manual ou automatizado que provaria a solução.'
+    ],
+    solution: pt(`A resposta ideal parece um comentario de revisao: decisao tecnica, risco evitado e teste claro para validar ${concept}.`),
+    hint: pt(`Pense em como outra pessoa do time verificaria ${concept} sem depender da sua explicacao verbal.`),
+    expectedOutput: pt(`Uma nota de revisão clara, com decisao, risco e teste verificavel para ${concept}.`),
+    reviewConcept: concept
+  }
+];
+
 const buildLesson = (path: PathSpec, moduleSpec: ModuleSpec, topicSpec: TopicSpec, moduleIndex: number, topicIndex: number): Lesson => {
   const moduleId = `${path.pathId}-${moduleSpec.slug}`;
   const id = `${path.pathId}-${moduleSpec.slug}-${topicSpec.slug}`;
@@ -357,6 +408,8 @@ const buildLesson = (path: PathSpec, moduleSpec: ModuleSpec, topicSpec: TopicSpe
   const market = `O conceito de ${concept} aparece em tarefas reais de ${label}, como manutenção de sistemas, criação de novas funcionalidades, correção de bugs, revisão de código e entrevistas técnicas. O valor profissional está em usar esse conhecimento para deixar o sistema mais claro, confiável e fácil de evoluir.`;
   const guidedExercise = guidedExerciseFor(concept);
   const practicalChallenge = challengeFor(concept);
+  const professionalExample = professionalExampleFor(label, concept, objective, topicSpec.code);
+  const exercises = progressiveExercisesFor(id, label, concept, objective, expectedResult);
   const content = `${why}\n\n${practice}\n\n${market}`;
   const summary = `Nesta aula você estudou ${concept} em ${label}, viu quando usar, analisou um exemplo prático e aprendeu a evitar o erro mais comum: ${mistake}`;
   const mistakes = [
@@ -437,6 +490,8 @@ const buildLesson = (path: PathSpec, moduleSpec: ModuleSpec, topicSpec: TopicSpe
       }
     ],
     codeExample: topicSpec.code,
+    professionalExample,
+    exercises,
     commonMistakes: mistakes,
     bestPractices: [
       best,
@@ -527,15 +582,15 @@ const additionalPath = (pathId: string, areaId: Lesson['areaId'], label: string,
   areaId,
   label,
   modules: [
-    module('fundamentos', `Fundamentos de ${label}`, `Base essencial para comecar ${label}.`, 'iniciante', topics.slice(0, 3).map(([slug, title, concept]) => topic(slug, title, concept, `Entender ${concept} em ${label} e aplicar em um exemplo pequeno.`, sampleCode(areaId, slug, concept), `${concept} cria uma base para escrever solucoes de ${label} com clareza e menos surpresa.`, `Aplique ${concept} em um exemplo pequeno antes de levar para um projeto maior.`, `Usar ${concept} como receita decorada sem entender a regra.`, `Explique ${concept} com suas palavras e teste um exemplo simples.`, `Aplicar ${concept} para resolver um problema pequeno.`))),
-    module('pratica', `${label} na pratica`, `Tecnicas usadas em tarefas reais de ${label}.`, 'iniciante', topics.slice(3, 6).map(([slug, title, concept]) => topic(slug, title, concept, `Praticar ${concept} em um fluxo real.`, sampleCode(areaId, slug, concept), `${concept} aparece quando a aplicacao precisa sair do exemplo e lidar com dados, usuarios e mudancas.`, `Use ${concept} para criar uma decisao verificavel e facil de revisar.`, `Misturar ${concept} com responsabilidades que deveriam ficar separadas.`, `Mantenha ${concept} pequeno, nomeado e testavel.`, `Usar ${concept} com uma responsabilidade clara.`))),
-    module('qualidade', `Qualidade em ${label}`, `Boas praticas para codigo confiavel.`, 'intermediario', topics.slice(6, 9).map(([slug, title, concept]) => topic(slug, title, concept, `Melhorar qualidade usando ${concept}.`, sampleCode(areaId, slug, concept), `${concept} reduz bugs porque torna o comportamento mais explicito e facil de discutir em revisão.`, `Aplique ${concept} onde houver duplicacao, regra escondida ou falha dificil de diagnosticar.`, `Tratar ${concept} como detalhe estetico em vez de regra de manutencao.`, `Use ${concept} para comunicar intencao a outra pessoa dev.`, `Melhorar manutencao com ${concept}.`))),
-    module('arquitetura', `Arquitetura de ${label}`, `Como organizar solucoes maiores.`, 'intermediario', topics.slice(9, 12).map(([slug, title, concept]) => topic(slug, title, concept, `Organizar codigo com ${concept}.`, sampleCode(areaId, slug, concept), `${concept} ajuda quando o projeto cresce e varias partes precisam colaborar sem virar confusao.`, `Use ${concept} para separar decisoes, dados e efeitos colaterais.`, `Centralizar tudo em um arquivo gigante.`, `Crie fronteiras claras e contratos pequenos.`, `Organizar responsabilidades com ${concept}.`))),
-    module('profissional', `${label} profissional`, `Temas avancados para mercado e entrevistas.`, 'avancado', topics.slice(12, 15).map(([slug, title, concept]) => topic(slug, title, concept, `Aplicar ${concept} em contexto profissional.`, sampleCode(areaId, slug, concept), `${concept} e cobrado quando qualidade, escala, seguranca ou colaboracao importam de verdade.`, `Use ${concept} para tomar decisoes explicaveis, nao para parecer sofisticado.`, `Escolher ${concept} sem avaliar custo e beneficio.`, `Compare alternativas e registre o motivo da escolha.`, `Defender uma decisao tecnica usando ${concept}.`)))
+    module('fundamentos', `Fundamentos de ${label}`, `Base essencial para comecar ${label}.`, 'iniciante', topics.slice(0, 3).map(([slug, title, concept]) => topic(slug, title, concept, `Entender ${concept} em ${label} e aplicar em um exemplo pequeno.`, sampleCode(areaId, slug, concept, label), `${concept} cria uma base para escrever solucoes de ${label} com clareza e menos surpresa.`, `Aplique ${concept} em um exemplo pequeno antes de levar para um projeto maior.`, `Usar ${concept} como receita decorada sem entender a regra.`, `Explique ${concept} com suas palavras e teste um exemplo simples.`, `Aplicar ${concept} para resolver um problema pequeno.`))),
+    module('pratica', `${label} na pratica`, `Tecnicas usadas em tarefas reais de ${label}.`, 'iniciante', topics.slice(3, 6).map(([slug, title, concept]) => topic(slug, title, concept, `Praticar ${concept} em um fluxo real.`, sampleCode(areaId, slug, concept, label), `${concept} aparece quando a aplicacao precisa sair do exemplo e lidar com dados, usuarios e mudancas.`, `Use ${concept} para criar uma decisao verificavel e facil de revisar.`, `Misturar ${concept} com responsabilidades que deveriam ficar separadas.`, `Mantenha ${concept} pequeno, nomeado e testavel.`, `Usar ${concept} com uma responsabilidade clara.`))),
+    module('qualidade', `Qualidade em ${label}`, `Boas praticas para codigo confiavel.`, 'intermediario', topics.slice(6, 9).map(([slug, title, concept]) => topic(slug, title, concept, `Melhorar qualidade usando ${concept}.`, sampleCode(areaId, slug, concept, label), `${concept} reduz bugs porque torna o comportamento mais explicito e facil de discutir em revisão.`, `Aplique ${concept} onde houver duplicacao, regra escondida ou falha dificil de diagnosticar.`, `Tratar ${concept} como detalhe estetico em vez de regra de manutencao.`, `Use ${concept} para comunicar intencao a outra pessoa dev.`, `Melhorar manutencao com ${concept}.`))),
+    module('arquitetura', `Arquitetura de ${label}`, `Como organizar solucoes maiores.`, 'intermediario', topics.slice(9, 12).map(([slug, title, concept]) => topic(slug, title, concept, `Organizar codigo com ${concept}.`, sampleCode(areaId, slug, concept, label), `${concept} ajuda quando o projeto cresce e varias partes precisam colaborar sem virar confusao.`, `Use ${concept} para separar decisoes, dados e efeitos colaterais.`, `Centralizar tudo em um arquivo gigante.`, `Crie fronteiras claras e contratos pequenos.`, `Organizar responsabilidades com ${concept}.`))),
+    module('profissional', `${label} profissional`, `Temas avancados para mercado e entrevistas.`, 'avancado', topics.slice(12, 15).map(([slug, title, concept]) => topic(slug, title, concept, `Aplicar ${concept} em contexto profissional.`, sampleCode(areaId, slug, concept, label), `${concept} e cobrado quando qualidade, escala, seguranca ou colaboracao importam de verdade.`, `Use ${concept} para tomar decisoes explicaveis, nao para parecer sofisticado.`, `Escolher ${concept} sem avaliar custo e beneficio.`, `Compare alternativas e registre o motivo da escolha.`, `Defender uma decisao tecnica usando ${concept}.`)))
   ]
 });
 
-function sampleCode(areaId: Lesson['areaId'], _slug: string, concept = 'Conceito') {
+function sampleCode(areaId: Lesson['areaId'], _slug: string, concept = 'Conceito', label: string = areaId) {
   const nomeConceito = pt(concept)
     .toLowerCase()
     .replace(/\breview\b/g, 'revisao')
@@ -557,7 +612,10 @@ function sampleCode(areaId: Lesson['areaId'], _slug: string, concept = 'Conceito
     csharp: `public record Aula(string Titulo, int Minutos);\n\nvar aula = new Aula("Variáveis", 10);\nConsole.WriteLine(aula.Titulo);`,
     interview: `problema -> exemplos -> solução simples -> trade-off`
   };
-  return samples[areaId] ?? `// Exemplo prático: ${pt(concept)}`;
+  const sample = samples[areaId] ?? `// Exemplo prático: ${pt(concept)}`;
+  const noteText = `${pt(label)} / ${pt(concept)}`;
+  const note = areaId === 'css' ? `/* Conceito praticado: ${noteText} */` : areaId === 'html' ? `<!-- Conceito praticado: ${noteText} -->` : areaId === 'sql' ? `-- Conceito praticado: ${noteText}` : `// Conceito praticado: ${noteText}`;
+  return `${sample}\n${note}`;
 }
 
 const compactTopics: Record<string, [string, string, string][]> = {
@@ -611,6 +669,8 @@ export const lessons: Lesson[] = specs.flatMap((path) =>
     moduleSpec.topics.map((topicSpec, topicIndex) => buildLesson(path, moduleSpec, topicSpec, moduleIndex, topicIndex))
   )
 );
+
+export const protectedAcademyLessonIds = lessons.map((lesson) => lesson.id);
 
 export const modulesByPath = (pathId: string) => academyModules.filter((item) => item.pathId === pathId).sort((a, b) => a.order - b.order);
 export const lessonsByPath = (pathId: string) => lessons.filter((item) => item.pathId === pathId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));

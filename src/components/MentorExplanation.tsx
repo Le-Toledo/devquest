@@ -7,6 +7,8 @@ import { GameCard } from './GameCard';
 export function MentorExplanation({ error, simplified = false }: { error: ReviewError; simplified?: boolean }) {
   const { colors } = useSettings();
   const lesson = lessonForArea(error.areaId);
+  const explanation = simplified ? `O ponto principal: ${error.hint}` : error.explanation;
+  const showHint = error.hint.trim().toLowerCase() !== explanation.trim().toLowerCase() && !explanation.toLowerCase().includes(error.hint.trim().toLowerCase());
 
   return (
     <GameCard style={{ borderColor: colors.primary }}>
@@ -26,14 +28,18 @@ export function MentorExplanation({ error, simplified = false }: { error: Review
       <Text style={[styles.label, { color: colors.muted }]}>Resposta correta</Text>
       <Text style={[styles.answer, { color: colors.success }]}>{error.correctAnswer}</Text>
 
-      <Text style={[styles.label, { color: colors.muted }]}>Explicacao</Text>
-      <Text style={[styles.body, { color: colors.text }]}>{simplified ? `O ponto principal: ${error.hint}` : error.explanation}</Text>
+      <Text style={[styles.label, { color: colors.muted }]}>Explicação</Text>
+      <Text style={[styles.body, { color: colors.text }]}>{explanation}</Text>
 
       <Text style={[styles.label, { color: colors.muted }]}>Mini-aula</Text>
       <Text style={[styles.body, { color: colors.text }]}>{lesson.lesson}</Text>
 
-      <Text style={[styles.label, { color: colors.muted }]}>Dica personalizada</Text>
-      <Text style={[styles.body, { color: colors.text }]}>Na proxima tentativa, procure por: {error.hint}</Text>
+      {showHint ? (
+        <>
+          <Text style={[styles.label, { color: colors.muted }]}>Dica personalizada</Text>
+          <Text style={[styles.body, { color: colors.text }]}>Na próxima tentativa, procure por: {error.hint}</Text>
+        </>
+      ) : null}
 
       {error.codeExample || lesson.code ? <Text style={[styles.code, { backgroundColor: colors.surfaceSoft, color: colors.text }]}>{error.codeExample ?? lesson.code}</Text> : null}
     </GameCard>

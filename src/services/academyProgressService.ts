@@ -3,49 +3,53 @@ import { learningPaths } from '../data/learningPaths';
 import { lessons, lessonsByPath } from '../data/lessons';
 import { AcademyProgress } from '../types/academy';
 import { parseJsonOrFallback } from '../utils/jsonStorage';
+import {
+  completeAcademyExercise,
+  completeAcademyLesson,
+  createDefaultAcademyProgress,
+  markAcademyLessonOpened,
+  markAcademyLessonRewarded,
+  normalizeAcademyProgress,
+  recordAcademyChallengeAttempt
+} from './academyProgressRules';
 import { storageKeys } from './storageKeys';
 
-export const defaultAcademyProgress: AcademyProgress = {
-  completedLessonIds: [],
-  unlockedPathIds: learningPaths.map((path) => path.id),
-  completedPathIds: [],
-  totalMinutesStudied: 0
-};
+export const defaultAcademyProgress: AcademyProgress = createDefaultAcademyProgress();
 
 export const academyProgressService = {
   async load(): Promise<AcademyProgress> {
     const raw = await AsyncStorage.getItem(storageKeys.academyProgress);
     const saved = parseJsonOrFallback(raw, defaultAcademyProgress);
-    return {
-      ...defaultAcademyProgress,
-      ...saved,
-      completedLessonIds: saved.completedLessonIds ?? [],
-      completedPathIds: saved.completedPathIds ?? [],
-      unlockedPathIds: Array.from(new Set([...(saved.unlockedPathIds ?? []), ...learningPaths.map((path) => path.id)])),
-      totalMinutesStudied: saved.totalMinutesStudied ?? 0
-    };
+    return normalizeAcademyProgress(saved);
   },
   async save(progress: AcademyProgress) {
-    await AsyncStorage.setItem(storageKeys.academyProgress, JSON.stringify(progress));
+    await AsyncStorage.setItem(storageKeys.academyProgress, JSON.stringify(normalizeAcademyProgress(progress)));
   },
   async completeLesson(progress: AcademyProgress, lessonId: string) {
-    const lesson = lessons.find((item) => item.id === lessonId);
-    const alreadyCompleted = progress.completedLessonIds.includes(lessonId);
-    const completedLessonIds = Array.from(new Set([...progress.completedLessonIds, lessonId]));
-    const completedPathIds = new Set(progress.completedPathIds);
-    if (lesson) {
-      const pathLessons = lessonsByPath(lesson.pathId);
-      if (pathLessons.every((item) => completedLessonIds.includes(item.id))) {
-        completedPathIds.add(lesson.pathId);
-      }
-    }
-    const next: AcademyProgress = {
-      ...progress,
-      completedLessonIds,
-      completedPathIds: Array.from(completedPathIds),
-      favoritePathId: lesson?.pathId ?? progress.favoritePathId,
-      totalMinutesStudied: progress.totalMinutesStudied + (alreadyCompleted ? 0 : lesson?.estimatedMinutes ?? 0)
-    };
+    const next = completeAcademyLesson(progress, lessonId);
+    await this.save(next);
+    return next;
+  },
+  async markRewarded(progress: AcademyProgress, lessonId: string) {
+    const next = markAcademyLessonRewarded(progress, lessonId);
+    await this.save(next);
+    return next;
+  },
+  async markOpened(progress: AcademyProgress, lessonId: string) {
+    const next = markAcademyLessonOpened(progress, lessonId);
+    await this.save(next);
+    return next;
+  },
+  async recordChallengeAttempt(
+    progress: AcademyProgress,
+    input: { lessonId: string; selectedIndex: number; correct: boolean; reviewErrorId?: string }
+  ) {
+    const next = recordAcademyChallengeAttempt(progress, input);
+    await this.save(next);
+    return next;
+  },
+  async completeExercise(progress: AcademyProgress, exerciseId: string) {
+    const next = completeAcademyExercise(progress, exerciseId);
     await this.save(next);
     return next;
   },

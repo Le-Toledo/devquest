@@ -7,6 +7,6 @@ export const careerTips: CareerTip[] = [
   { id: 'frontend-a11y', tag: 'Front-end', title: 'Acessibilidade e qualidade', body: 'Labels, contraste, foco e semântica melhoram o produto para todos os usuários.' },
   { id: 'backend-logs', tag: 'Back-end', title: 'Logs contam a história da produção', body: 'Registre eventos importantes com contexto, sem vazar dados sensíveis.' },
   { id: 'interview', tag: 'Entrevistas', title: 'Explique trade-offs', body: 'Em entrevistas técnicas, pensar alto e comparar alternativas vale tanto quanto chegar rápido.' },
-  { id: 'portfolio', tag: 'Portfólio', title: 'Mostre produtos completos', body: 'Um app pequeno, bonito, testado e publicado comunica mais que dez TODO lists iguais.' },
+  { id: 'portfolio', tag: 'Portfólio', title: 'Mostre produtos completos', body: 'Um app pequeno, bonito, testado e publicado comunica mais que dez listas de tarefas genéricas.' },
   { id: 'study', tag: 'Estudo', title: 'Estude em ciclos jogáveis', body: 'Aprenda conceito, pratique em desafio curto, revise erro e publique um miniprojeto.' }
 ];
