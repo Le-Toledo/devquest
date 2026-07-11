@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "check:supabase": "node scripts/validateSupabaseEnv.js",
     "audit:content": "tsx scripts/auditContent.ts",
+    "audit:questions": "tsx scripts/auditQuestions.ts",
     "audit:academy": "tsx scripts/auditAcademyContent.ts",
     "audit:code-lab": "tsx scripts/auditCodeLabContent.ts"
   },

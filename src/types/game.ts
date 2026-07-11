@@ -22,13 +22,19 @@ export type AreaId =
 
 export interface Question {
   id: string;
+  language: AreaId;
+  module: string;
+  topic: string;
+  objective: string;
   areaId: AreaId;
   kind: QuestionKind;
   difficulty: Difficulty;
   prompt: string;
   code?: string;
   options: string[];
+  optionIds: string[];
   correctIndex: number;
+  correctAnswerId: string;
   explanation: string;
   hint: string;
   tags: string[];

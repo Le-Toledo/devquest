@@ -15,6 +15,19 @@ Depois abra no Expo Go pelo QR Code. Para web:
 npx expo start --web
 ```
 
+## Qualidade das perguntas
+
+O banco de perguntas deve ser validado antes de qualquer entrega que altere `src/data/questions.ts`:
+
+```bash
+npm run audit:questions
+npx tsx scripts/testQuestionBankValidation.ts
+```
+
+Cada pergunta precisa permanecer como uma unidade completa: `id`, `language`, `module`, `topic`, `objective`, `prompt`, `options`, `optionIds`, `correctAnswerId`, `explanation`, `hint`, `tags`, `difficulty`, `kind`, `type` e `points` pertencem ao mesmo objeto. Em perguntas `complete-code`, o `code` deve conter a lacuna `____` e a resposta correta deve poder substituir essa lacuna diretamente.
+
+`correctAnswerId` identifica a resposta correta de forma estavel, enquanto `correctIndex` pode ser recalculado quando as alternativas forem embaralhadas. Ao adicionar ou corrigir perguntas existentes, nunca altere IDs ja publicados: progresso, historico, revisao e estatisticas dependem desses identificadores.
+
 ## Como rodar no macOS
 
 No macOS, prefira manter o projeto fora da pasta Desktop para evitar problemas de permissao, iCloud/Finder e observacao de arquivos pelo Watchman. O caminho recomendado e `~/Projects/devquest-main`.

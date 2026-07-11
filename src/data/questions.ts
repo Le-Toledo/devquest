@@ -1,4 +1,5 @@
 import { AreaId, Difficulty, Question, QuestionKind, QuestionType } from '../types/game';
+import { filterValidQuestions } from '../services/questionBankValidation';
 
 type Topic = {
   slug: string;
@@ -163,20 +164,43 @@ const topic = (
   tags: string[]
 ): Topic => ({ slug, label, correct, distractors, explanation, hint, tags });
 
-const rotateOptions = (correct: string, distractors: [string, string, string], index: number) => {
-  const options = [correct, ...distractors];
-  const shift = index % options.length;
-  const rotated = [...options.slice(shift), ...options.slice(0, shift)];
+const optionSetFor = (questionId: string, correct: string, distractors: [string, string, string], index: number) => {
+  const entries = [
+    { id: `${questionId}:correct`, text: correct },
+    { id: `${questionId}:distractor-1`, text: distractors[0] },
+    { id: `${questionId}:distractor-2`, text: distractors[1] },
+    { id: `${questionId}:distractor-3`, text: distractors[2] }
+  ];
+  const shift = index % entries.length;
+  const rotated = [...entries.slice(shift), ...entries.slice(0, shift)];
   return {
-    options: rotated,
-    correctIndex: rotated.indexOf(correct)
+    options: rotated.map((entry) => entry.text),
+    optionIds: rotated.map((entry) => entry.id),
+    correctIndex: rotated.findIndex((entry) => entry.id === `${questionId}:correct`),
+    correctAnswerId: `${questionId}:correct`
   };
 };
 
 type Variant = {
   skill: string;
+  module: string;
+  topic: string;
+  objective: string;
   prompt: string;
   code?: string;
+  correct: string;
+  distractors: [string, string, string];
+  explanation: string;
+  hint: string;
+  tags: string[];
+};
+
+type CompletionScenario = {
+  module: string;
+  topic: string;
+  objective: string;
+  prompt: string;
+  code: string;
   correct: string;
   distractors: [string, string, string];
   explanation: string;
@@ -227,26 +251,91 @@ const answerContext: Record<Difficulty, string> = {
   avancado: 'considerando manutenção, testes e evolução'
 };
 
-const codeFor = (areaId: AreaId, topicItem: Topic, kind: QuestionKind) => {
-  if (kind !== 'complete-code' && kind !== 'bug-hunt' && kind !== 'order-blocks') return undefined;
-  const snippets: Partial<Record<AreaId, string>> = {
-    logic: `if (${topicItem.slug}.isValid) {\n  ____();\n}`,
-    javascript: `const result = items.____((item) => item.active);`,
-    typescript: `type Payload = {\n  status: "ok";\n  data: ____[];\n};`,
-    python: `def process(items):\n    return ____(items)`,
-    java: `public class Service {\n  private ____ value;\n}`,
-    kotlin: `val result = user?.profile ____ fallback`,
-    csharp: `public ____ Name { get; init; }`,
-    sql: `SELECT ____ FROM users WHERE active = 1;`,
-    html: `<____ class="content">CodeQuest</____>`,
-    css: `.panel {\n  ____: 16px;\n}`,
-    react: `const [state, setState] = ____(initialState);`,
-    node: `app.____('/health', handler);`,
-    git: `git ____ -m "ajuste do desafio"`,
-    rest: `____ /api/users/42`,
-    interview: `Explique em voz alta: problema -> trade-off -> ____`
+const completionScenarios: Record<AreaId, CompletionScenario[]> = {
+  logic: [
+    { module: 'Lógica', topic: 'condicionais', objective: 'Escolher o bloco correto quando uma regra booleana é verdadeira.', prompt: 'Qual chamada completa o trecho para executar a ação apenas quando a regra é válida?', code: 'if (pedido.isValid) {\n  ____();\n}', correct: 'processOrder', distractors: ['renderCss', 'dropTable', 'commitFile'], explanation: 'processOrder completa o trecho porque representa a ação de processar o pedido depois que a condição foi validada. O código final fica: if (pedido.isValid) { processOrder(); }.', hint: 'A lacuna pede uma ação de domínio, não uma operação visual ou de infraestrutura.', tags: ['condicional', 'fluxo'] },
+    { module: 'Lógica', topic: 'loops', objective: 'Escolher a estrutura que percorre uma coleção.', prompt: 'Qual palavra-chave completa o trecho para percorrer todos os itens?', code: '____ (const item of items) {\n  total += item.value;\n}', correct: 'for', distractors: ['if', 'try', 'new'], explanation: 'for completa o trecho porque cria um loop sobre os itens. O código final fica: for (const item of items) { total += item.value; }.', hint: 'A presença de "of items" indica uma iteração.', tags: ['loop', 'iteracao'] }
+  ],
+  javascript: [
+    { module: 'JavaScript', topic: 'map em arrays', objective: 'Transformar cada item de uma lista em outro valor.', prompt: 'Qual método completa o trecho para transformar usuários em nomes?', code: 'const names = users.____((user) => user.name);', correct: 'map', distractors: ['filter', 'find', 'forEach'], explanation: 'map completa o trecho porque retorna um novo array com o resultado da transformação de cada item. O código final fica: const names = users.map((user) => user.name);.', hint: 'A saída precisa continuar sendo uma lista, mas com outro formato.', tags: ['array', 'map'] },
+    { module: 'JavaScript', topic: 'filter em arrays', objective: 'Manter somente itens que passam em uma condição.', prompt: 'Qual método completa o trecho para manter apenas usuários ativos?', code: 'const activeUsers = users.____((user) => user.active);', correct: 'filter', distractors: ['map', 'reduce', 'push'], explanation: 'filter completa o trecho porque mantém os itens cujo predicado retorna verdadeiro. O código final fica: const activeUsers = users.filter((user) => user.active);.', hint: 'A função retorna verdadeiro ou falso para cada item.', tags: ['array', 'filter'] },
+    { module: 'JavaScript', topic: 'async/await', objective: 'Aguardar uma Promise antes de usar seu resultado.', prompt: 'Qual palavra-chave completa o trecho para esperar a resposta da API?', code: 'const response = ____ fetch("/api/users");', correct: 'await', distractors: ['async', 'return', 'yield'], explanation: 'await completa o trecho porque aguarda a Promise retornada por fetch antes de seguir. O código final fica: const response = await fetch("/api/users");.', hint: 'A lacuna fica antes de uma chamada que retorna Promise.', tags: ['async', 'fetch'] }
+  ],
+  typescript: [
+    { module: 'TypeScript', topic: 'type alias', objective: 'Declarar um contrato de dados reutilizável.', prompt: 'Qual palavra-chave completa o trecho para declarar o formato de Payload?', code: '____ Payload = {\n  status: "ok";\n  data: string[];\n};', correct: 'type', distractors: ['const', 'enum', 'return'], explanation: 'type completa o trecho porque cria um alias de tipo para o payload. O código final fica: type Payload = { status: "ok"; data: string[]; };.', hint: 'A declaração descreve formato para o compilador, não valor de runtime.', tags: ['tipos', 'type'] },
+    { module: 'TypeScript', topic: 'interfaces', objective: 'Descrever o contrato de um objeto.', prompt: 'Qual palavra-chave completa o trecho para declarar um contrato de usuário?', code: '____ User {\n  id: string;\n  name: string;\n}', correct: 'interface', distractors: ['function', 'await', 'className'], explanation: 'interface completa o trecho porque declara o contrato estrutural de User. O código final fica: interface User { id: string; name: string; }.', hint: 'A lacuna aparece antes de um nome e um bloco de propriedades.', tags: ['interface', 'tipos'] }
+  ],
+  python: [
+    { module: 'Python', topic: 'print', objective: 'Exibir uma mensagem no terminal.', prompt: 'Qual função completa o trecho para mostrar a mensagem?', code: '____("Code Quest")', correct: 'print', distractors: ['console.log', 'echo', 'System.out'], explanation: 'print completa o trecho porque é a função embutida de Python para saída simples no terminal. O código final fica: print("Code Quest").', hint: 'Em Python, a função de saída simples tem cinco letras.', tags: ['basico', 'saida'] },
+    { module: 'Python', topic: 'len', objective: 'Obter o tamanho de uma coleção.', prompt: 'Qual função completa o trecho para contar os itens da lista?', code: 'total = ____(items)', correct: 'len', distractors: ['size', 'count()', 'length'], explanation: 'len completa o trecho porque retorna a quantidade de itens em uma coleção Python. O código final fica: total = len(items).', hint: 'É uma função embutida curta, não uma propriedade da lista.', tags: ['lista', 'basico'] }
+  ],
+  java: [
+    { module: 'Java', topic: 'modificadores de acesso', objective: 'Declarar um campo encapsulado dentro da classe.', prompt: 'Qual modificador completa o trecho para manter o campo encapsulado?', code: 'public class Service {\n  ____ String name;\n}', correct: 'private', distractors: ['package', 'static void', 'return'], explanation: 'private completa o trecho porque restringe o acesso direto ao campo dentro da classe. O código final fica: public class Service { private String name; }.', hint: 'O campo não deve ficar exposto publicamente.', tags: ['oop', 'encapsulamento'] },
+    { module: 'Java', topic: 'ArrayList', objective: 'Instanciar uma lista dinâmica tipada.', prompt: 'Qual classe completa o trecho para criar uma lista dinâmica?', code: 'List<String> names = new ____<>();', correct: 'ArrayList', distractors: ['String', 'HashMap', 'Thread'], explanation: 'ArrayList completa o trecho porque implementa List com tamanho dinâmico. O código final fica: List<String> names = new ArrayList<>();.', hint: 'A variável é do tipo List e precisa de uma implementação de lista.', tags: ['collections', 'arraylist'] }
+  ],
+  kotlin: [
+    { module: 'Kotlin', topic: 'null safety', objective: 'Fornecer fallback quando o valor pode ser nulo.', prompt: 'Qual operador completa o trecho para usar fallback quando profile for nulo?', code: 'val result = user.profile ____ fallback', correct: '?:', distractors: ['?.', '!!', '=='], explanation: '?: completa o trecho porque é o operador Elvis usado para retornar fallback quando o lado esquerdo é nulo. O código final fica: val result = user.profile ?: fallback.', hint: 'O operador parece uma pergunta seguida de dois-pontos.', tags: ['null', 'elvis'] },
+    { module: 'Kotlin', topic: 'val', objective: 'Declarar uma referência somente leitura.', prompt: 'Qual palavra-chave completa o trecho para declarar um valor que não será reatribuído?', code: '____ total = items.size', correct: 'val', distractors: ['var', 'let', 'const'], explanation: 'val completa o trecho porque declara uma referência somente leitura em Kotlin. O código final fica: val total = items.size.', hint: 'Use a palavra-chave de imutabilidade de referência.', tags: ['sintaxe', 'imutabilidade'] }
+  ],
+  csharp: [
+    { module: 'C#', topic: 'propriedades', objective: 'Declarar uma propriedade pública.', prompt: 'Qual palavra-chave completa o trecho para expor a propriedade Name?', code: 'public ____ Name { get; init; }', correct: 'string', distractors: ['var', 'class', 'await'], explanation: 'string completa o trecho porque define o tipo da propriedade Name. O código final fica: public string Name { get; init; }.', hint: 'Name armazena texto, então precisa de um tipo textual.', tags: ['property', 'tipos'] },
+    { module: 'C#', topic: 'async/await', objective: 'Aguardar uma tarefa assíncrona.', prompt: 'Qual palavra-chave completa o trecho para esperar a operação assíncrona?', code: 'var user = ____ repository.GetUserAsync(id);', correct: 'await', distractors: ['async', 'yield', 'new'], explanation: 'await completa o trecho porque aguarda a Task retornada por GetUserAsync. O código final fica: var user = await repository.GetUserAsync(id);.', hint: 'A chamada termina com Async e retorna uma operação futura.', tags: ['async', 'task'] }
+  ],
+  sql: [
+    { module: 'SQL', topic: 'SELECT', objective: 'Selecionar colunas em uma consulta.', prompt: 'Qual palavra-chave completa o trecho para buscar dados da tabela users?', code: '____ name FROM users WHERE active = 1;', correct: 'SELECT', distractors: ['DELETE', 'INSERT', 'COMMIT'], explanation: 'SELECT completa o trecho porque inicia uma consulta de leitura. O código final fica: SELECT name FROM users WHERE active = 1;.', hint: 'A consulta lê uma coluna, não altera a tabela.', tags: ['select', 'consulta'] },
+    { module: 'SQL', topic: 'WHERE', objective: 'Filtrar linhas por uma condição.', prompt: 'Qual palavra-chave completa o trecho para filtrar usuários ativos?', code: 'SELECT name FROM users ____ active = 1;', correct: 'WHERE', distractors: ['JOIN', 'ORDER', 'TABLE'], explanation: 'WHERE completa o trecho porque aplica uma condição às linhas retornadas. O código final fica: SELECT name FROM users WHERE active = 1;.', hint: 'A lacuna aparece antes da condição booleana.', tags: ['where', 'filtro'] }
+  ],
+  html: [
+    { module: 'HTML', topic: 'main semântico', objective: 'Marcar o conteúdo principal da página.', prompt: 'Qual tag completa o trecho para representar o conteúdo principal?', code: '<____ class="content">CodeQuest</____>', correct: 'main', distractors: ['span', 'script', 'style'], explanation: 'main completa o trecho porque representa a região principal única da página. O código final fica: <main class="content">CodeQuest</main>.', hint: 'A tag semântica indica a região central da página.', tags: ['semantica', 'main'] },
+    { module: 'HTML', topic: 'texto alternativo', objective: 'Descrever imagem relevante para acessibilidade.', prompt: 'Qual atributo completa o trecho para descrever a imagem?', code: '<img src="avatar.png" ____="Avatar do jogador" />', correct: 'alt', distractors: ['href', 'target', 'rel'], explanation: 'alt completa o trecho porque descreve a imagem para leitores de tela e fallback. O código final fica: <img src="avatar.png" alt="Avatar do jogador" />.', hint: 'O atributo tem três letras.', tags: ['a11y', 'imagem'] }
+  ],
+  css: [
+    { module: 'CSS', topic: 'espaçamento', objective: 'Aplicar espaçamento interno em um painel.', prompt: 'Qual propriedade completa o trecho para criar espaço interno?', code: '.panel {\n  ____: 16px;\n}', correct: 'padding', distractors: ['margin', 'display', 'fetch'], explanation: 'padding completa o trecho porque controla o espaço interno entre conteúdo e borda. O código final fica: .panel { padding: 16px; }.', hint: 'A propriedade mexe dentro do elemento, não fora dele.', tags: ['layout', 'spacing'] },
+    { module: 'CSS', topic: 'Flexbox', objective: 'Ativar layout flexível em uma dimensão.', prompt: 'Qual valor completa o trecho para ativar Flexbox?', code: '.toolbar {\n  display: ____;\n}', correct: 'flex', distractors: ['grid-template', 'absolute', 'SELECT'], explanation: 'flex completa o trecho porque ativa o modelo de layout Flexbox. O código final fica: .toolbar { display: flex; }.', hint: 'O valor pertence à propriedade display.', tags: ['layout', 'flexbox'] }
+  ],
+  react: [
+    { module: 'React', topic: 'useState', objective: 'Criar estado local em componente funcional.', prompt: 'Qual Hook do React completa corretamente o trecho abaixo para criar um estado local?', code: 'const [state, setState] = ____(initialState);', correct: 'useState', distractors: ['useEffect', 'useMemo', 'useRef'], explanation: 'useState é o Hook utilizado para criar e atualizar estado local em componentes funcionais do React. Ele retorna o valor atual do estado e uma função para atualizá-lo. O código final fica: const [state, setState] = useState(initialState);.', hint: 'Observe que o código utiliza desestruturação para obter o valor do estado e sua função de atualização.', tags: ['state', 'hook'] },
+    { module: 'React', topic: 'useEffect', objective: 'Executar sincronização depois do render.', prompt: 'Qual Hook completa o trecho para sincronizar o título depois do render?', code: '____(() => {\n  document.title = title;\n}, [title]);', correct: 'useEffect', distractors: ['useState', 'useRef', 'useMemo'], explanation: 'useEffect completa o trecho porque executa efeitos depois do render e reage à mudança de dependências. O código final fica: useEffect(() => { document.title = title; }, [title]);.', hint: 'O array de dependências é uma pista de efeito.', tags: ['effect', 'hook'] },
+    { module: 'React', topic: 'props', objective: 'Receber entradas passadas pelo componente pai.', prompt: 'Qual parâmetro completa o trecho para acessar entradas recebidas pelo componente?', code: 'function Card(____) {\n  return <Text>{props.title}</Text>;\n}', correct: 'props', distractors: ['state', 'context', 'effect'], explanation: 'props completa o trecho porque representa as entradas recebidas pelo componente. O código final fica: function Card(props) { return <Text>{props.title}</Text>; }.', hint: 'O corpo já acessa props.title.', tags: ['props', 'componentes'] }
+  ],
+  node: [
+    { module: 'Node.js', topic: 'rotas Express', objective: 'Registrar uma rota HTTP GET.', prompt: 'Qual método completa o trecho para registrar uma rota de leitura?', code: 'app.____("/health", handler);', correct: 'get', distractors: ['map', 'render', 'commit'], explanation: 'get completa o trecho porque registra um handler para requisições HTTP GET no Express. O código final fica: app.get("/health", handler);.', hint: 'A rota de health normalmente é uma leitura.', tags: ['express', 'http'] },
+    { module: 'Node.js', topic: 'erros assíncronos', objective: 'Aguardar uma operação antes de responder.', prompt: 'Qual palavra-chave completa o trecho para esperar a consulta assíncrona?', code: 'const users = ____ repository.listUsers();', correct: 'await', distractors: ['async', 'new', 'throw'], explanation: 'await completa o trecho porque aguarda a Promise da consulta antes de usar o resultado. O código final fica: const users = await repository.listUsers();.', hint: 'A chamada retorna uma operação assíncrona.', tags: ['async', 'promise'] }
+  ],
+  git: [
+    { module: 'Git/GitHub', topic: 'commits', objective: 'Criar um commit com mensagem.', prompt: 'Qual subcomando completa o trecho para registrar as mudanças com mensagem?', code: 'git ____ -m "ajuste do desafio"', correct: 'commit', distractors: ['status', 'branch', 'pull'], explanation: 'commit completa o trecho porque grava uma unidade de mudança no histórico. O código final fica: git commit -m "ajuste do desafio".', hint: 'A flag -m acompanha a mensagem do registro.', tags: ['commit', 'workflow'] },
+    { module: 'Git/GitHub', topic: 'status', objective: 'Verificar arquivos modificados e staged.', prompt: 'Qual subcomando completa o trecho para ver o estado do repositório?', code: 'git ____', correct: 'status', distractors: ['push', 'merge', 'clone'], explanation: 'status completa o trecho porque mostra branch, staged e arquivos modificados. O código final fica: git status.', hint: 'É o comando que você roda antes de decidir o próximo passo.', tags: ['git', 'status'] }
+  ],
+  rest: [
+    { module: 'APIs REST', topic: 'GET', objective: 'Buscar um recurso sem alterar estado.', prompt: 'Qual método HTTP completa o trecho para consultar um usuário?', code: '____ /api/users/42', correct: 'GET', distractors: ['POST', 'DELETE', 'PATCH'], explanation: 'GET completa o trecho porque representa uma leitura segura do recurso. O código final fica: GET /api/users/42.', hint: 'A rota está buscando um usuário específico.', tags: ['http', 'get'] },
+    { module: 'APIs REST', topic: 'POST', objective: 'Enviar dados para criar um recurso.', prompt: 'Qual método HTTP completa o trecho para criar um novo usuário?', code: '____ /api/users', correct: 'POST', distractors: ['GET', 'DELETE', 'OPTIONS'], explanation: 'POST completa o trecho porque envia dados para criação ou processamento. O código final fica: POST /api/users.', hint: 'Criar um recurso normalmente usa envio de corpo.', tags: ['http', 'post'] }
+  ],
+  interview: [
+    { module: 'Entrevista Técnica', topic: 'comunicação', objective: 'Organizar a explicação em etapas claras.', prompt: 'Qual etapa completa o roteiro para fechar a resposta com maturidade técnica?', code: 'problema -> trade-off -> ____', correct: 'validacao', distractors: ['culpa', 'silencio', 'atalho'], explanation: 'validacao completa o roteiro porque uma resposta madura mostra como confirmar que a escolha funciona. O roteiro final fica: problema -> trade-off -> validacao.', hint: 'Depois de explicar escolhas, mostre como provar que elas funcionam.', tags: ['comunicacao', 'validacao'] },
+    { module: 'Entrevista Técnica', topic: 'debugging', objective: 'Testar uma hipótese por vez.', prompt: 'Qual palavra completa o fluxo profissional de investigação?', code: 'hipotese -> teste -> ____', correct: 'conclusao', distractors: ['achismo', 'mudanca-total', 'silencio'], explanation: 'conclusao completa o fluxo porque cada teste precisa gerar aprendizado antes do próximo passo. O fluxo final fica: hipotese -> teste -> conclusao.', hint: 'O último passo registra o que o teste provou.', tags: ['debug', 'hipotese'] }
+  ]
+};
+
+const completionScenarioFor = (areaId: AreaId, index: number) => {
+  const scenarios = completionScenarios[areaId];
+  return scenarios[Math.floor(Math.max(0, index - 2) / kinds.length) % scenarios.length] ?? scenarios[0];
+};
+
+const completionPromptFor = (scenario: CompletionScenario, difficulty: Difficulty, index: number) => {
+  const contexts = [
+    'Analise a lacuna pelo papel do trecho, não por palavra solta.',
+    'Escolha a alternativa que poderia substituir exatamente os quatro underscores.',
+    'Considere que o trecho precisa continuar sintaticamente correto.',
+    'Pense no resultado final depois que a lacuna for preenchida.',
+    'Use o contexto do código para eliminar opções de outro conceito.',
+    'Procure a opção que mantém a intenção original do exemplo.'
+  ];
+  const difficultyContext: Record<Difficulty, string> = {
+    iniciante: 'Cenário inicial.',
+    intermediario: 'Cenário de revisão.',
+    avancado: 'Cenário de manutenção.'
   };
-  return snippets[areaId];
+  return `${scenario.prompt} ${difficultyContext[difficulty]} ${contexts[Math.floor(Math.max(0, index - 2) / kinds.length) % contexts.length]}`;
 };
 
 const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, difficulty: Difficulty, index: number): Variant => {
@@ -259,30 +348,31 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
     'best-solution': 'escolher-pratica'
   };
   const skill = `${skillByKind[kind]}-${difficulty}`;
-  const code = codeFor(area.areaId, topicItem, kind);
 
   if (kind === 'complete-code') {
+    const scenario = completionScenarioFor(area.areaId, index);
     return {
       skill,
-      prompt: basePrompt,
-      code,
-      correct: `usar ${topicItem.correct} para completar o trecho ${answerContext[difficulty]}`,
-      distractors: [
-        `usar ${topicItem.distractors[0]} mesmo sem resolver o objetivo`,
-        `misturar ${topicItem.distractors[1]} com ${topicItem.label} sem validar o objetivo`,
-        `substituir por ${topicItem.distractors[2]} sem validar o contexto`
-      ],
-      explanation: `${topicItem.correct} completa o trecho porque resolve ${topicItem.label} no contexto de ${area.displayName}. ${topicItem.explanation} Evite preencher lacunas por semelhança visual: leia entrada, saída e intenção.`,
-      hint: `${topicItem.hint} Procure a lacuna que conecta entrada e resultado.`,
-      tags: [...topicItem.tags, skill, 'codigo']
+      module: scenario.module,
+      topic: scenario.topic,
+      objective: scenario.objective,
+      prompt: completionPromptFor(scenario, difficulty, index),
+      code: scenario.code,
+      correct: scenario.correct,
+      distractors: scenario.distractors,
+      explanation: scenario.explanation,
+      hint: scenario.hint,
+      tags: [...scenario.tags, skill, 'codigo']
     };
   }
 
   if (kind === 'bug-hunt') {
     return {
       skill,
+      module: area.displayName,
+      topic: topicItem.label,
+      objective: `Diagnosticar um problema ligado a ${topicItem.label}.`,
       prompt: basePrompt,
-      code,
       correct: `o bug e ignorar ${topicItem.correct} ${answerContext[difficulty]}`,
       distractors: [
         `o bug e usar ${topicItem.distractors[0]}`,
@@ -298,8 +388,10 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
   if (kind === 'order-blocks') {
     return {
       skill,
+      module: area.displayName,
+      topic: topicItem.label,
+      objective: `Sequenciar uma solução ligada a ${topicItem.label}.`,
       prompt: basePrompt,
-      code,
       correct: `entender o objetivo -> aplicar ${topicItem.correct} -> validar o resultado ${answerContext[difficulty]}`,
       distractors: [
         `copiar ${topicItem.distractors[0]} -> testar depois -> ajustar se quebrar`,
@@ -315,6 +407,9 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
   if (kind === 'best-solution') {
     return {
       skill,
+      module: area.displayName,
+      topic: topicItem.label,
+      objective: `Escolher a prática mais sustentável para ${topicItem.label}.`,
       prompt: basePrompt,
       correct: `${topicItem.correct}, com nomes claros e validacao do caso de uso ${answerContext[difficulty]}`,
       distractors: [
@@ -330,6 +425,9 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
 
   return {
     skill,
+    module: area.displayName,
+    topic: topicItem.label,
+    objective: `Reconhecer quando usar ${topicItem.label}.`,
     prompt: basePrompt,
     correct: `usar ${topicItem.correct} quando o problema envolve ${topicItem.label} ${answerContext[difficulty]}`,
     distractors: [
@@ -350,17 +448,24 @@ const buildArea = (area: AreaBank): Question[] =>
     const difficulty = difficulties[Math.floor((itemIndex / area.count) * difficulties.length)] ?? 'iniciante';
     const kind = kinds[itemIndex % kinds.length] ?? 'quiz';
     const variant = variantFor(area, topicItem, kind, difficulty, index);
-    const { options, correctIndex } = rotateOptions(variant.correct, variant.distractors, itemIndex);
+    const id = `${area.prefix}-${topicItem.slug}-${pad(index)}`;
+    const { options, optionIds, correctIndex, correctAnswerId } = optionSetFor(id, variant.correct, variant.distractors, itemIndex);
 
     return {
-      id: `${area.prefix}-${topicItem.slug}-${pad(index)}`,
+      id,
+      language: area.areaId,
+      module: pt(variant.module),
+      topic: pt(variant.topic),
+      objective: pt(variant.objective),
       areaId: area.areaId,
       kind,
       difficulty,
       prompt: pt(variant.prompt),
       code: variant.code,
       options: options.map(pt),
+      optionIds,
       correctIndex,
+      correctAnswerId,
       explanation: pt(variant.explanation),
       hint: pt(variant.hint),
       tags: Array.from(new Set([area.areaId, difficulty, ...variant.tags])),
@@ -610,7 +715,8 @@ const banks: AreaBank[] = [
   }
 ];
 
-export const questions: Question[] = banks.flatMap(buildArea);
+export const rawQuestions: Question[] = banks.flatMap(buildArea);
+export const questions: Question[] = filterValidQuestions(rawQuestions);
 
 const emptyQuestionsByArea: Record<AreaId, Question[]> = {
   logic: [],

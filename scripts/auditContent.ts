@@ -192,7 +192,7 @@ conceptDominance.forEach(([key, count]) =>
 
 const repeatedCorrectAnswers = [
   ...byKey(
-    questions,
+    questions.filter((question) => question.kind !== "complete-code"),
     (question) =>
       question.options[question.correctIndex]?.trim().toLowerCase() ?? "",
   ).entries(),
