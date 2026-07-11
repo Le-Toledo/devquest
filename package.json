@@ -5,14 +5,15 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "check:supabase": "node scripts/validateSupabaseEnv.js",
     "audit:content": "tsx scripts/auditContent.ts",
-    "audit:academy": "tsx scripts/auditAcademyContent.ts"
+    "audit:academy": "tsx scripts/auditAcademyContent.ts",
+    "audit:code-lab": "tsx scripts/auditCodeLabContent.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "15.0.3",
