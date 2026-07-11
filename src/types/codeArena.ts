@@ -8,7 +8,8 @@ export interface CodeChallenge {
   title: string;
   description: string;
   areaId: AreaId;
-  language: 'JavaScript' | 'TypeScript' | 'Python' | 'Java' | 'Kotlin' | 'SQL' | 'HTML' | 'CSS' | 'React' | 'Node.js' | 'APIs REST' | 'Git' | 'Entrevista';
+  language: 'Lógica' | 'JavaScript' | 'TypeScript' | 'Python' | 'Java' | 'Kotlin' | 'C#' | 'SQL' | 'HTML' | 'CSS' | 'React' | 'Node.js' | 'APIs REST' | 'Git' | 'Entrevista';
+  concept: string;
   difficulty: Difficulty;
   kind: CodeChallengeKind;
   code: string;

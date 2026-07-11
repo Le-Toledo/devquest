@@ -26,6 +26,7 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
   const [sessionFinished, setSessionFinished] = useState(false);
   const [correctInSession, setCorrectInSession] = useState(0);
   const [earnedInSession, setEarnedInSession] = useState({ xp: 0, coins: 0 });
+  const [lastAnswerRewarded, setLastAnswerRewarded] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [aiHint, setAiHint] = useState('');
   const [loadingHint, setLoadingHint] = useState(false);
@@ -42,6 +43,7 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
     setResolving(false);
     setAiHint('');
     setLoadingHint(false);
+    setLastAnswerRewarded(false);
   }, [currentChallengeId]);
 
   if (!challenge) {
@@ -64,6 +66,7 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
       const next = alreadyCompleted ? progress : await codeArenaService.complete(progress, challenge.id);
       setProgress(next);
       setCorrectInSession((value) => value + 1);
+      setLastAnswerRewarded(!alreadyCompleted);
       if (!alreadyCompleted) {
         setEarnedInSession((value) => ({ xp: value.xp + challenge.xpReward, coins: value.coins + challenge.coinReward }));
         awardCampaignReward(challenge.xpReward, challenge.coinReward, next.medals.includes('Arena Pro') ? ['code-arena-pro'] : [], {
@@ -74,16 +77,20 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
         localAnalyticsService.recordActivity({ challenge: true, areaId: challenge.areaId, combo: next.combo }).catch(() => undefined);
       }
     } else {
+      setLastAnswerRewarded(false);
       const next = await codeArenaService.markReview(progress, challenge.id);
       setProgress(next);
-      await reviewService.saveCampaignError({
-        missionId: `arena-${challenge.id}`,
+      await reviewService.saveArenaError({
+        challengeId: challenge.id,
         prompt: challenge.title,
         areaId: challenge.areaId,
-        concept: challenge.kind,
+        concept: challenge.concept,
         difficulty: challenge.difficulty,
+        selectedAnswer: challenge.options[index] ?? 'Sem resposta',
+        correctAnswer: challenge.options[challenge.correctIndex] ?? 'Resposta correta',
         explanation: challenge.explanation,
-        hint: challenge.hint
+        hint: challenge.hint,
+        codeExample: challenge.code
       });
     }
     setResolving(false);
@@ -99,7 +106,6 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
 
   const askHint = async () => {
     if (!challenge || loadingHint) return;
-    if (__DEV__) console.log('[ProfessorByteAI] Botão clicado');
     setLoadingHint(true);
     try {
       const result = await professorByteAi.ask('Preciso de uma dica para resolver este desafio de código.', {
@@ -107,7 +113,7 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
         aiMode: selected === null ? 'hint' : 'explanation',
         topic: challenge.title,
         language: challenge.language,
-        concept: challenge.difficulty,
+        concept: challenge.concept,
         code: challenge.code,
         options: challenge.options,
         selectedAnswer: selected === null ? undefined : challenge.options[selected],
@@ -167,7 +173,9 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
             <Text style={[styles.subtitle, { color: colors.muted }]}>{challenge.explanation}</Text>
             <Text style={[styles.reward, { color: colors.text }]}>
               {selected === challenge.correctIndex
-                ? `+${challenge.xpReward} XP • +${challenge.coinReward} moedas`
+                ? lastAnswerRewarded
+                  ? `+${challenge.xpReward} XP • +${challenge.coinReward} moedas`
+                  : 'Desafio já concluído antes; XP e moedas não foram duplicados.'
                 : 'Professor Byte salvou este ponto para revisar depois.'}
             </Text>
             {selected !== challenge.correctIndex ? <GameButton title="Tentar novamente" icon="refresh" variant="secondary" onPress={() => setSelected(null)} /> : null}

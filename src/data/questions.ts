@@ -70,6 +70,9 @@ const textReplacements: [RegExp, string][] = [
   [/\brevisavel\b/g, 'revisável'],
   [/\bintencao\b/g, 'intenção'],
   [/\bpedagogico\b/g, 'pedagógico'],
+  [/\bmetodo\b/g, 'método'],
+  [/\bMetodo\b/g, 'Método'],
+  [/\bdecomposicao\b/g, 'decomposição'],
   [/\bsaida\b/g, 'saída'],
   [/\bsaidas\b/g, 'saídas'],
   [/\bnumero\b/g, 'número'],
@@ -83,6 +86,7 @@ const textReplacements: [RegExp, string][] = [
   [/\bcondicao\b/g, 'condição'],
   [/\bassincrono\b/g, 'assíncrono'],
   [/\bfuncao\b/g, 'função'],
+  [/\bFuncao\b/g, 'Função'],
   [/\bfuncoes\b/g, 'funções'],
   [/\bvariaveis\b/g, 'variáveis'],
   [/\binteracoes\b/g, 'interações'],
@@ -180,19 +184,47 @@ type Variant = {
   tags: string[];
 };
 
-const difficultyFocus: Record<Difficulty, string> = {
-  iniciante: 'reconhecer o fundamento',
-  intermediario: 'aplicar em um caso pratico',
-  avancado: 'avaliar trade-offs e riscos'
+const promptFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, difficulty: Difficulty, index: number) => {
+  const contextByDifficulty: Record<Difficulty, string> = {
+    iniciante: `Você está revisando ${topicItem.label} em ${area.displayName}.`,
+    intermediario: `Durante uma revisão de código em ${area.displayName}, aparece uma decisão ligada a ${topicItem.label}.`,
+    avancado: `Em um projeto real de ${area.displayName}, uma escolha sobre ${topicItem.label} pode afetar manutenção, testes e evolução.`
+  };
+  const context = contextByDifficulty[difficulty];
+  const promptsByKind: Record<QuestionKind, string[]> = {
+    quiz: [
+      `${context} Qual alternativa descreve melhor quando esse conceito deve ser usado?`,
+      `${context} Que decisão mostra entendimento correto desse conceito?`,
+      `${context} Qual opção evita uma interpretação superficial do problema?`
+    ],
+    'complete-code': [
+      `${context} Qual alternativa completa o trecho mantendo a intenção do código?`,
+      `${context} O que deve entrar na lacuna para o código expressar a regra correta?`,
+      `${context} Qual escolha completa o exemplo sem mudar o objetivo do trecho?`
+    ],
+    'bug-hunt': [
+      `${context} Qual alternativa identifica a causa do problema no trecho?`,
+      `${context} Em uma investigação de bug, qual opção aponta a regra que foi quebrada?`,
+      `${context} Qual diagnóstico ajudaria a corrigir o erro sem reescrever tudo?`
+    ],
+    'order-blocks': [
+      `${context} Qual sequência de passos resolveria melhor esse caso?`,
+      `${context} Em que ordem uma pessoa experiente analisaria esse problema?`,
+      `${context} Qual fluxo reduz tentativa aleatória e valida o resultado?`
+    ],
+    'best-solution': [
+      `${context} Qual alternativa seria mais sustentável em um projeto real?`,
+      `${context} Qual solução equilibra clareza, segurança e manutenção?`,
+      `${context} Qual escolha passaria melhor por uma revisão técnica?`
+    ]
+  };
+  return promptsByKind[kind][index % promptsByKind[kind].length] ?? promptsByKind[kind][0];
 };
 
-const promptFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, difficulty: Difficulty, index: number) => {
-  const levelLabel = difficulty === 'iniciante' ? 'fundamento' : difficulty === 'intermediario' ? 'decisao pratica' : 'cenario avancado';
-  if (kind === 'complete-code') return `Complete o trecho ${index} de ${area.displayName} sobre ${topicItem.label}.`;
-  if (kind === 'bug-hunt') return `Encontre o bug ${index} em ${area.displayName}: ${topicItem.label}.`;
-  if (kind === 'order-blocks') return `Qual ordem resolve melhor ${topicItem.label} em ${area.displayName} no desafio ${index}?`;
-  if (kind === 'best-solution') return `Melhor solucao ${index} em ${area.displayName} para ${topicItem.label}:`;
-  return `${area.displayName} ${levelLabel} ${index}: o que voce deve lembrar sobre ${topicItem.label}?`;
+const answerContext: Record<Difficulty, string> = {
+  iniciante: 'em um caso simples',
+  intermediario: 'durante uma revisão de código',
+  avancado: 'considerando manutenção, testes e evolução'
 };
 
 const codeFor = (areaId: AreaId, topicItem: Topic, kind: QuestionKind) => {
@@ -218,7 +250,6 @@ const codeFor = (areaId: AreaId, topicItem: Topic, kind: QuestionKind) => {
 };
 
 const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, difficulty: Difficulty, index: number): Variant => {
-  const focus = difficultyFocus[difficulty];
   const basePrompt = promptFor(area, topicItem, kind, difficulty, index);
   const skillByKind: Record<QuestionKind, string> = {
     quiz: 'conceito',
@@ -233,9 +264,9 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
   if (kind === 'complete-code') {
     return {
       skill,
-      prompt: `${basePrompt} Foque em ${focus}, nao em decorar a palavra.`,
+      prompt: basePrompt,
       code,
-      correct: `usar ${topicItem.correct} para completar o trecho em nivel ${difficulty}`,
+      correct: `usar ${topicItem.correct} para completar o trecho ${answerContext[difficulty]}`,
       distractors: [
         `usar ${topicItem.distractors[0]} mesmo sem resolver o objetivo`,
         `misturar ${topicItem.distractors[1]} com ${topicItem.label} sem validar o objetivo`,
@@ -250,9 +281,9 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
   if (kind === 'bug-hunt') {
     return {
       skill,
-      prompt: `${basePrompt} Qual escolha identifica a causa, nao apenas o sintoma?`,
+      prompt: basePrompt,
       code,
-      correct: `o bug e ignorar ${topicItem.correct} em nivel ${difficulty}`,
+      correct: `o bug e ignorar ${topicItem.correct} ${answerContext[difficulty]}`,
       distractors: [
         `o bug e usar ${topicItem.distractors[0]}`,
         `o bug e a falta de ${topicItem.distractors[1]}`,
@@ -267,9 +298,9 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
   if (kind === 'order-blocks') {
     return {
       skill,
-      prompt: `${basePrompt} Pense na ordem de decisao que uma pessoa dev seguiria em review.`,
+      prompt: basePrompt,
       code,
-      correct: `entender o objetivo -> aplicar ${topicItem.correct} -> validar o resultado em nivel ${difficulty}`,
+      correct: `entender o objetivo -> aplicar ${topicItem.correct} -> validar o resultado ${answerContext[difficulty]}`,
       distractors: [
         `copiar ${topicItem.distractors[0]} -> testar depois -> ajustar se quebrar`,
         `escolher ${topicItem.distractors[1]} -> ignorar entrada -> publicar`,
@@ -284,8 +315,8 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
   if (kind === 'best-solution') {
     return {
       skill,
-      prompt: `${basePrompt} Qual alternativa e mais sustentavel para um projeto real?`,
-      correct: `${topicItem.correct}, com nomes claros e validacao do caso de uso em nivel ${difficulty}`,
+      prompt: basePrompt,
+      correct: `${topicItem.correct}, com nomes claros e validacao do caso de uso ${answerContext[difficulty]}`,
       distractors: [
         `${topicItem.distractors[0]}, porque parece mais rapido no primeiro teste`,
         `${topicItem.distractors[1]}, mesmo sem validar o objetivo do problema`,
@@ -299,8 +330,8 @@ const variantFor = (area: AreaBank, topicItem: Topic, kind: QuestionKind, diffic
 
   return {
     skill,
-    prompt: `${basePrompt} Objetivo pedagogico: ${focus}.`,
-    correct: `usar ${topicItem.correct} quando o problema envolve ${topicItem.label} em nivel ${difficulty}`,
+    prompt: basePrompt,
+    correct: `usar ${topicItem.correct} quando o problema envolve ${topicItem.label} ${answerContext[difficulty]}`,
     distractors: [
       `aplicar uma solucao parecida sem verificar ${topicItem.label}`,
       `resolver apenas a sintaxe e ignorar o objetivo de ${topicItem.label}`,
@@ -330,7 +361,7 @@ const buildArea = (area: AreaBank): Question[] =>
       code: variant.code,
       options: options.map(pt),
       correctIndex,
-      explanation: pt(`${variant.explanation} Nivel ${difficulty}: ${difficultyFocus[difficulty]}.`),
+      explanation: pt(variant.explanation),
       hint: pt(variant.hint),
       tags: Array.from(new Set([area.areaId, difficulty, ...variant.tags])),
       type: area.areaId === 'interview' ? 'entrevista' : itemIndex % 11 === 0 ? 'saida' : typeByKind[kind],

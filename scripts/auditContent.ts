@@ -1,4 +1,5 @@
 import { codeChallenges } from "../src/data/codeChallenges";
+import { lessons } from "../src/data/lessons";
 import { questions } from "../src/data/questions";
 import { stages } from "../src/data/worlds";
 import { AreaId, Difficulty, QuestionType } from "../src/types/game";
@@ -53,6 +54,28 @@ const weakAlternativePatterns = [
   "apenas decorar",
   "sem relacao",
 ];
+const forbiddenVisibleMetadataPatterns: RegExp[] = [
+  /objetivo\s+pedag[oó]gico/i,
+  /\bfundamento\s*\d+\b/i,
+  /\bl[oó]gica\s+fundamento\b/i,
+  /\bo que voc[eê] deve lembrar\b/i,
+  /\breconhecer o fundamento\b/i,
+  /\bdescri[cç][aã]o t[eé]cnica\b/i,
+  /\bcampo auxiliar\b/i,
+  /\b[a-z]+-[a-z0-9-]+-\d{3}\b/i,
+  /^\s*(l[oó]gica|javascript|typescript|python|java|kotlin|c#|sql|html|css|react|node\.js|apis rest|git|entrevista)\s+(fundamento|cen[aá]rio avan[cç]ado|decis[aã]o pr[aá]tica)\s+\d+\s*:/i,
+];
+const unfinishedTextPattern = /____|lorem ipsum/i;
+const explicitTodoPattern = /\b(?:TODO|TBD)\b/;
+
+const assertNoVisibleMetadata = (label: string, value?: string) => {
+  if (!value) return;
+  forbiddenVisibleMetadataPatterns.forEach((pattern) => {
+    if (pattern.test(value)) errors.push(`${label} contem metadado interno: ${value}`);
+  });
+  if (unfinishedTextPattern.test(value) || explicitTodoPattern.test(value)) errors.push(`${label} contem placeholder ou texto inacabado: ${value}`);
+  if (/^\s*\d+[\).:-]/.test(value)) errors.push(`${label} comeca com numero interno: ${value}`);
+};
 
 const coreConceptTags = (
   tags: string[],
@@ -123,6 +146,9 @@ questions.forEach((question) => {
     errors.push(`Pergunta ${question.id} tem correctIndex invalido.`);
   if (!question.tags.length)
     errors.push(`Pergunta ${question.id} nao tem tags.`);
+  assertNoVisibleMetadata(`Pergunta ${question.id}`, question.prompt);
+  assertNoVisibleMetadata(`Explicacao da pergunta ${question.id}`, question.explanation);
+  assertNoVisibleMetadata(`Dica da pergunta ${question.id}`, question.hint);
   const normalizedOptions = question.options.map((option) =>
     option.trim().toLowerCase(),
   );
@@ -131,6 +157,7 @@ questions.forEach((question) => {
   const correct = normalizedOptions[question.correctIndex] ?? "";
   question.options.forEach((option, index) => {
     const lower = option.toLowerCase();
+    assertNoVisibleMetadata(`Alternativa ${index + 1} da pergunta ${question.id}`, option);
     if (index !== question.correctIndex && lower === correct)
       errors.push(
         `Pergunta ${question.id} tem distrator igual a resposta correta.`,
@@ -294,7 +321,60 @@ if (duplicateChallengeIds.length)
     `IDs duplicados em desafios de arena: ${duplicateChallengeIds.join(", ")}`,
   );
 
+const genericArenaExplanationPatterns = [
+  "é a melhor resposta para este trecho porque resolve o foco",
+  "sem criar efeito colateral desnecessário",
+];
+const forbiddenArenaTermsByArea: Partial<Record<AreaId, string[]>> = {
+  python: ["console.log", "undefined", "return false", "any", "addEventListener"],
+  sql: ["console.log", "undefined", "return false", "any", "enumerate", "yield", "def "],
+  html: ["console.log", "undefined", "return false", "any"],
+  css: ["console.log", "undefined", "return false", "any"],
+  git: ["console.log", "undefined", "return false", "any"],
+};
+const allowedTermsByArea: Partial<Record<AreaId, string[]>> = {
+  javascript: ["undefined"],
+  typescript: ["any"],
+};
+const arenaDistractorKeyCounts = byKey(
+  codeChallenges,
+  (challenge) =>
+    challenge.options
+      .filter((_, index) => index !== challenge.correctIndex)
+      .map((option) => option.trim().toLowerCase())
+      .sort()
+      .join("|"),
+);
+const repeatedDistractorSets = [...arenaDistractorKeyCounts.entries()].filter(
+  ([key, count]) => key && count > 30,
+);
+repeatedDistractorSets.forEach(([key, count]) =>
+  errors.push(`Lista de distratores repetida demais (${count}x): ${key}`),
+);
+
+const codeBySnippet = new Map<string, Set<string>>();
 codeChallenges.forEach((challenge) => {
+  const normalizedCode = challenge.code.trim().toLowerCase();
+  const concepts = codeBySnippet.get(normalizedCode) ?? new Set<string>();
+  concepts.add(`${challenge.areaId}:${challenge.concept}`);
+  codeBySnippet.set(normalizedCode, concepts);
+});
+codeBySnippet.forEach((concepts, code) => {
+  if (concepts.size > 1)
+    errors.push(
+      `Mesmo codigo usado em conceitos diferentes: ${[...concepts].join(", ")} -> ${code.slice(0, 80)}`,
+    );
+});
+
+codeChallenges.forEach((challenge) => {
+  assertNoVisibleMetadata(`Titulo do desafio de arena ${challenge.id}`, challenge.title);
+  assertNoVisibleMetadata(`Descricao do desafio de arena ${challenge.id}`, challenge.description);
+  assertNoVisibleMetadata(`Conceito do desafio de arena ${challenge.id}`, challenge.concept);
+  assertNoVisibleMetadata(`Explicacao do desafio de arena ${challenge.id}`, challenge.explanation);
+  assertNoVisibleMetadata(`Dica do desafio de arena ${challenge.id}`, challenge.hint);
+  challenge.options.forEach((option, index) => assertNoVisibleMetadata(`Alternativa ${index + 1} do desafio de arena ${challenge.id}`, option));
+  if (!challenge.concept || challenge.concept.trim().length < 3)
+    errors.push(`Desafio ${challenge.id} sem conceito de recomendacao.`);
   if (challenge.options.length !== 4)
     errors.push(`Desafio ${challenge.id} nao tem 4 alternativas.`);
   if (
@@ -302,6 +382,70 @@ codeChallenges.forEach((challenge) => {
     challenge.correctIndex >= challenge.options.length
   )
     errors.push(`Desafio ${challenge.id} tem correctIndex invalido.`);
+  const correctAnswer = challenge.options[challenge.correctIndex];
+  if (!correctAnswer)
+    errors.push(`Desafio ${challenge.id} nao possui resposta correta nas opcoes.`);
+  if (new Set(challenge.options.map((option) => option.trim().toLowerCase())).size !== challenge.options.length)
+    errors.push(`Desafio ${challenge.id} possui alternativas repetidas.`);
+  if (genericArenaExplanationPatterns.some((pattern) => challenge.explanation.toLowerCase().includes(pattern)))
+    errors.push(`Desafio ${challenge.id} possui explicacao generica.`);
+  if (!challenge.explanation.toLowerCase().includes(challenge.concept.toLowerCase().split(" ")[0]))
+    warnings.push(`Desafio ${challenge.id} pode nao mencionar o conceito na explicacao.`);
+  if (challenge.kind === "complete-code" && !challenge.code.includes("____"))
+    errors.push(`Desafio ${challenge.id} e complete-code mas nao possui lacuna.`);
+  if (challenge.kind === "bug-hunt" && !/corre[cç][aã]o|erro|falha|bug/i.test(`${challenge.code} ${challenge.description}`))
+    errors.push(`Desafio ${challenge.id} e bug-hunt mas nao descreve bug/correcao.`);
+  if (challenge.kind === "simulate-output" && challenge.code.includes("____"))
+    errors.push(`Desafio ${challenge.id} e simulate-output mas possui lacuna.`);
+  if (challenge.kind === "simulate-output" && !/print|console\.log|sa[ií]da|resultado/i.test(`${challenge.code} ${challenge.description}`))
+    errors.push(`Desafio ${challenge.id} e simulate-output mas nao possui saida previsivel.`);
+  if (challenge.kind === "order-blocks" && !/ordem|ordene|->/i.test(`${challenge.code} ${challenge.description}`))
+    errors.push(`Desafio ${challenge.id} e order-blocks mas nao pede ordenacao.`);
+  if (challenge.areaId === "python" && /compreens[aã]o|comprehension/i.test(`${challenge.title} ${challenge.concept}`) && !/\[[^\]]+\s+for\s+[^\]]+\s+in\s+[^\]]+\]/.test(challenge.code))
+    errors.push(`Desafio ${challenge.id} fala de comprehension sem sintaxe de comprehension.`);
+  const forbiddenTerms = forbiddenArenaTermsByArea[challenge.areaId] ?? [];
+  const allowedTerms = allowedTermsByArea[challenge.areaId] ?? [];
+  challenge.options.forEach((option) => {
+    const lower = option.toLowerCase();
+    forbiddenTerms.forEach((term) => {
+      if (lower.includes(term) && !allowedTerms.includes(term))
+        errors.push(`Desafio ${challenge.id} usa alternativa de outra linguagem/conceito: ${option}`);
+    });
+  });
+  if (/user\.____\("name",\s*""\)/.test(challenge.code) && correctAnswer !== "get")
+    errors.push(`Desafio ${challenge.id} usa user.get mas resposta correta nao e get.`);
+  if (/user\.____\("name",\s*""\)/.test(challenge.code) && challenge.options.includes("enumerate"))
+    errors.push(`Desafio ${challenge.id} ainda aceita enumerate no acesso a dicionario.`);
+});
+
+lessons.forEach((lesson) => {
+  assertNoVisibleMetadata(`Titulo da aula ${lesson.id}`, lesson.title);
+  assertNoVisibleMetadata(`Descricao da aula ${lesson.id}`, lesson.description);
+  assertNoVisibleMetadata(`Objetivo da aula ${lesson.id}`, lesson.objective);
+  assertNoVisibleMetadata(`Conteudo da aula ${lesson.id}`, lesson.content);
+  assertNoVisibleMetadata(`Resumo da aula ${lesson.id}`, lesson.summary);
+  assertNoVisibleMetadata(`Conceito da aula ${lesson.id}`, lesson.concept);
+  assertNoVisibleMetadata(`Dica do professor da aula ${lesson.id}`, lesson.professorTip);
+  lesson.sections?.forEach((section, index) => {
+    assertNoVisibleMetadata(`Secao ${index + 1} da aula ${lesson.id}`, section.title);
+    assertNoVisibleMetadata(`Corpo da secao ${index + 1} da aula ${lesson.id}`, section.body);
+  });
+  lesson.commonMistakes?.forEach((mistake, index) => assertNoVisibleMetadata(`Armadilha ${index + 1} da aula ${lesson.id}`, mistake));
+  lesson.bestPractices?.forEach((practice, index) => assertNoVisibleMetadata(`Boa pratica ${index + 1} da aula ${lesson.id}`, practice));
+  assertNoVisibleMetadata(`Prompt do desafio rapido da aula ${lesson.id}`, lesson.challenge.prompt);
+  assertNoVisibleMetadata(`Explicacao do desafio rapido da aula ${lesson.id}`, lesson.challenge.explanation);
+  lesson.challenge.options.forEach((option, index) => assertNoVisibleMetadata(`Alternativa ${index + 1} da aula ${lesson.id}`, option));
+  if (lesson.professionalExample) {
+    assertNoVisibleMetadata(`Cenario profissional da aula ${lesson.id}`, lesson.professionalExample.scenario);
+    assertNoVisibleMetadata(`Passo a passo profissional da aula ${lesson.id}`, lesson.professionalExample.walkthrough);
+  }
+  lesson.exercises?.forEach((exercise) => {
+    assertNoVisibleMetadata(`Titulo do exercicio ${exercise.id}`, exercise.title);
+    assertNoVisibleMetadata(`Exercicio ${exercise.id}`, exercise.prompt);
+    assertNoVisibleMetadata(`Dica do exercicio ${exercise.id}`, exercise.hint);
+    assertNoVisibleMetadata(`Conceito de revisao do exercicio ${exercise.id}`, exercise.reviewConcept);
+    exercise.acceptanceCriteria.forEach((criterion, index) => assertNoVisibleMetadata(`Criterio ${index + 1} do exercicio ${exercise.id}`, criterion));
+  });
 });
 
 const challengesByArea = countBy(

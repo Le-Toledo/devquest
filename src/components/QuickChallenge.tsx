@@ -11,7 +11,7 @@ export function QuickChallenge({
   onWrong
 }: {
   challenge: QuickChallengeType;
-  onCorrect: () => void | Promise<void>;
+  onCorrect: (selectedIndex: number) => void | Promise<void>;
   onWrong: (selectedIndex: number) => void | Promise<void>;
 }) {
   const { colors } = useSettings();
@@ -24,7 +24,7 @@ export function QuickChallenge({
     setSubmitting(true);
     setSelected(index);
     try {
-      if (index === challenge.correctIndex) await onCorrect();
+      if (index === challenge.correctIndex) await onCorrect(index);
       else await onWrong(index);
     } finally {
       setSubmitting(false);

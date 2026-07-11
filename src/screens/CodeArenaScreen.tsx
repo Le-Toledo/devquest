@@ -11,7 +11,7 @@ import { Navigate } from '../navigation/routes';
 import { CodeChallenge, CodeChallengeStatus } from '../types/codeArena';
 import { Difficulty } from '../types/game';
 
-const languages = ['Todas', 'JavaScript', 'TypeScript', 'Python', 'Java', 'Kotlin', 'SQL', 'HTML', 'CSS', 'React', 'Node.js', 'APIs REST', 'Git', 'Entrevista'];
+const languages = ['Todas', 'Lógica', 'JavaScript', 'TypeScript', 'Python', 'Java', 'Kotlin', 'C#', 'SQL', 'HTML', 'CSS', 'React', 'Node.js', 'APIs REST', 'Git', 'Entrevista'];
 const levels: (Difficulty | 'todos')[] = ['todos', 'iniciante', 'intermediario', 'avancado'];
 
 export function CodeArenaScreen({ navigate, goBack }: { navigate: Navigate; goBack: () => void }) {
