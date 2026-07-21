@@ -7,6 +7,17 @@ const cleanEnvValue = (value?: string) => value?.trim().replace(/^["']|["']$/g, 
 const supabaseUrl = cleanEnvValue(process.env.EXPO_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = cleanEnvValue(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
+const supabaseProjectRef = (() => {
+  if (!supabaseUrl) return null;
+  try {
+    return new URL(supabaseUrl).hostname.split('.')[0] || null;
+  } catch {
+    return null;
+  }
+})();
+
+const supabaseAuthStorageKey = supabaseProjectRef ? `sb-${supabaseProjectRef}-auth-token` : null;
+
 const hasValidSupabaseUrl = (value?: string) => {
   if (!value || value.includes('your-project-ref') || value.includes('seu-projeto')) return false;
   try {
@@ -42,4 +53,17 @@ export function requireSupabase() {
     throw new Error('Supabase não configurado. Defina EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_ANON_KEY.');
   }
   return supabase;
+}
+
+export async function clearSupabaseLocalSession() {
+  if (supabase) {
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // A sessão local ainda precisa ser removida quando o usuário já foi apagado no servidor.
+    }
+  }
+  if (supabaseAuthStorageKey) {
+    await AsyncStorage.removeItem(supabaseAuthStorageKey);
+  }
 }

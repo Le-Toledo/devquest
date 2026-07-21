@@ -3,6 +3,7 @@ export * from './aiTutor';
 export * from './backend';
 export * from './campaign';
 export * from './codeArena';
+export * from './feedback';
 export * from './game';
 export * from './question';
 export * from './monetization';

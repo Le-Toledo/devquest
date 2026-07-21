@@ -11,6 +11,7 @@ import {
   CodeLabScreen,
   CampaignScreen,
   DailyRewardScreen,
+  FeedbackScreen,
   HomeScreen,
   LessonScreen,
   LoginScreen,
@@ -29,6 +30,7 @@ import { streakService } from '@services';
 import { useAuth } from '../hooks/useAuth';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
+import { releaseConfig } from '../services/releaseConfig';
 import { syncService } from '../services/syncService';
 
 export function AppNavigator() {
@@ -136,10 +138,11 @@ export function AppNavigator() {
   if (route.name === 'codeLabChallenge') return withToast(<CodeLabChallengeScreen challengeId={route.challengeId} navigate={setRoute} goBack={() => setRoute(route.returnTo ?? { name: 'codeLab' })} />);
   if (route.name === 'quiz') return withToast(<QuizScreen stage={route.stage} navigate={setRoute} goBack={() => setRoute({ name: 'map' })} />);
   if (route.name === 'profile') return withToast(<ProfileScreen navigate={setRoute} goBack={goHome} />);
-  if (route.name === 'professorByte') return withToast(<ProfessorByteScreen goBack={() => setRoute(route.returnTo ?? { name: 'home' })} initialPrompt={route.initialPrompt} context={route.context} />);
+  if (route.name === 'professorByte') return withToast(<ProfessorByteScreen goBack={() => setRoute(route.returnTo ?? { name: 'home' })} openFeedback={() => setRoute({ name: 'feedback' })} initialPrompt={route.initialPrompt} context={route.context} />);
   if (route.name === 'ranking') return withToast(<RankingScreen goBack={goHome} />);
-  if (route.name === 'shop') return withToast(<ShopScreen goBack={goHome} openPremium={() => setRoute({ name: 'premium' })} />);
-  if (route.name === 'settings') return withToast(<SettingsScreen goBack={goHome} openAccount={() => setRoute({ name: 'account' })} />);
+  if (route.name === 'shop') return withToast(<ShopScreen goBack={goHome} openPremium={releaseConfig.commercialFeaturesEnabled ? () => setRoute({ name: 'premium' }) : undefined} />);
+  if (route.name === 'settings') return withToast(<SettingsScreen goBack={goHome} openAccount={() => setRoute({ name: 'account' })} openFeedback={() => setRoute({ name: 'feedback' })} />);
+  if (route.name === 'feedback') return withToast(<FeedbackScreen goBack={goHome} />);
   if (route.name === 'career') return withToast(<CareerScreen navigate={setRoute} goBack={goHome} />);
   if (route.name === 'campaign') return withToast(<CampaignScreen navigate={setRoute} goBack={goHome} />);
   if (route.name === 'reviewLab') return withToast(<ReviewLabScreen navigate={setRoute} goBack={goHome} />);

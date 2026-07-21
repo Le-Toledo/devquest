@@ -38,7 +38,7 @@ type Mode =
   | { name: 'result'; mission: CampaignMission; victory: boolean }
   | { name: 'boss'; chapter: CampaignChapter };
 
-export function CampaignScreen({ navigate, goBack }: { navigate: Navigate; goBack: () => void }) {
+export function CampaignScreen({ goBack }: { navigate: Navigate; goBack: () => void }) {
   const { colors } = useSettings();
   const { awardCampaignReward } = usePlayer();
   const { progress, setProgress, loading } = useCampaign();
@@ -181,10 +181,6 @@ export function CampaignScreen({ navigate, goBack }: { navigate: Navigate; goBac
           <Text style={[styles.kicker, { color: colors.accent }]}>Modo Campanha</Text>
           <Text style={[styles.title, { color: colors.text }]}>A Jornada do Desenvolvedor</Text>
           <Text style={[styles.subtitle, { color: colors.muted }]}>Capítulo atual: {stats.currentChapter.title} • {stats.missionsDone} missões • {stats.bossesDone} chefes</Text>
-          <GameButton title="Academia Dev" icon="school" variant="secondary" onPress={() => navigate({ name: 'academy' })} style={styles.inlineButton} />
-          <GameButton title="Perguntar ao Professor Byte" icon="chatbubbles" variant="secondary" onPress={() => navigate({ name: 'professorByte', initialPrompt: 'Me ajude na campanha', context: { source: 'campaign', topic: 'A Jornada do Desenvolvedor' }, returnTo: { name: 'campaign' } })} style={styles.inlineButton} />
-          <GameButton title="Ver perfil" icon="person" variant="secondary" onPress={() => navigate({ name: 'profile' })} style={styles.inlineButton} />
-            <GameButton title="Laboratório de Revisão" icon="flask" variant="secondary" onPress={() => navigate({ name: 'reviewLab' })} style={styles.inlineButton} />
         </GameCard>
 
         {!progress.selectedTrack ? (

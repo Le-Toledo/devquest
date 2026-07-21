@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { AuthSession, AuthUser } from '../types/backend';
-import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
+import { clearSupabaseLocalSession, isSupabaseConfigured, supabase } from '../services/supabaseClient';
 
 const supabaseNotConfiguredMessage = 'Supabase não configurado. Configure as variáveis de ambiente para usar autenticação real.';
 
@@ -12,6 +12,7 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signUp: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<{ error?: string }>;
+  clearLocalSession: () => Promise<void>;
 };
 
 type AuthResult = {
@@ -89,6 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clearLocalSession = async () => {
+    await clearSupabaseLocalSession();
+    setSession(null);
+  };
+
   const value: AuthContextValue = {
     user: session?.user ?? null,
     session,
@@ -96,7 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     configured: isSupabaseConfigured,
     signIn,
     signUp,
-    signOut
+    signOut,
+    clearLocalSession
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

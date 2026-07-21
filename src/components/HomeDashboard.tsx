@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { codeLabChallenges } from '../data/codeLabChallenges';
+import { useAcademy } from '../hooks/useAcademy';
+import { useAdaptiveLearning } from '../hooks/useAdaptiveLearning';
 import { useAuth } from '../hooks/useAuth';
 import { useCodeLab } from '../hooks/useCodeLab';
 import { usePlayer } from '../hooks/usePlayer';
 import { useReview } from '../hooks/useReview';
 import { useSettings } from '../hooks/useSettings';
 import { Navigate } from '../navigation/routes';
+import { buildJourneyRecommendation, resolveJourneyRecommendationMotivation, resolveJourneyRecommendationRoute } from '../services/journeyRecommendationService';
+import { releaseConfig } from '../services/releaseConfig';
 import { StreakState } from '../services/streakService';
 import { GameButton } from './GameButton';
 import { GameCard } from './GameCard';
@@ -25,17 +28,31 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
   const { colors } = useSettings();
   const { user } = useAuth();
   const { profile } = usePlayer();
+  const { progress: academyProgress } = useAcademy();
   const { progress: codeLabProgress } = useCodeLab();
-  const { stats: reviewStats } = useReview();
+  const { errors: reviewErrors, stats: reviewStats } = useReview();
+  const { state: adaptiveLearning } = useAdaptiveLearning();
+  const lastJourneyPressAt = useRef(0);
   const completedStages = Object.keys(profile.completedStages).length;
   const weekProgress = Math.min(1, streak.currentStreak / 7);
   const syncColor = user ? colors.success : colors.warning;
-  const codeLabRecommendation = useMemo(() => {
-    const hardConcept = reviewStats.hardestConcepts[0]?.label.toLowerCase();
-    return codeLabChallenges.find((challenge) => hardConcept && challenge.concept.toLowerCase().includes(hardConcept))
-      ?? codeLabChallenges.find((challenge) => challenge.id === codeLabProgress.currentChallengeId)
-      ?? codeLabChallenges[0];
-  }, [codeLabProgress.currentChallengeId, reviewStats.hardestConcepts]);
+  const journeyRecommendation = useMemo(() => buildJourneyRecommendation({
+    player: profile,
+    academyProgress,
+    codeLabProgress,
+    reviewErrors,
+    reviewStats,
+    adaptiveLearning
+  }), [profile, academyProgress, codeLabProgress, reviewErrors, reviewStats, adaptiveLearning]);
+  const codeLabRecommendation = journeyRecommendation.relatedCodeLab?.challenge;
+  const journeyMotivation = resolveJourneyRecommendationMotivation(journeyRecommendation.primary);
+
+  const continueJourney = useCallback(() => {
+    const now = Date.now();
+    if (now - lastJourneyPressAt.current < 700) return;
+    lastJourneyPressAt.current = now;
+    navigate(resolveJourneyRecommendationRoute(journeyRecommendation.primary));
+  }, [journeyRecommendation.primary, navigate]);
 
   const modeTiles: ModeTile[] = [
     { title: 'Campanha', subtitle: 'História guiada', icon: 'compass', tone: 'primary', onPress: () => navigate({ name: 'campaign' }) },
@@ -45,7 +62,9 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
     { title: 'Laboratório', subtitle: 'Treino com erros', icon: 'flask', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
     { title: 'Conquistas', subtitle: 'Metas e recompensas', icon: 'trophy', tone: 'success', onPress: () => navigate({ name: 'achievements' }) },
     { title: 'Loja', subtitle: 'Itens e moedas', icon: 'storefront', tone: 'accent', onPress: () => navigate({ name: 'shop' }) },
-    { title: 'Premium', subtitle: 'Benefícios', icon: 'diamond', tone: 'premium', onPress: () => navigate({ name: 'premium' }) }
+    ...(releaseConfig.commercialFeaturesEnabled
+      ? [{ title: 'Premium', subtitle: 'Benefícios', icon: 'diamond' as const, tone: 'premium' as const, onPress: () => navigate({ name: 'premium' }) }]
+      : [])
   ];
 
   const colorFor = (tone: ModeTile['tone']) => {
@@ -111,8 +130,14 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
             <Text style={[styles.cardKicker, { color: colors.primary }]}>Próximo passo</Text>
             <Text style={[styles.journeyTitle, { color: colors.text }]}>Continuar Jornada</Text>
             <Text style={[styles.journeySubtitle, { color: colors.muted }]}>{completedStages} fases concluídas na campanha</Text>
+            <Text style={[styles.journeyReason, { color: colors.muted }]} numberOfLines={2}>{journeyMotivation}</Text>
           </View>
-          <GameButton title="Entrar" icon="arrow-forward" onPress={() => navigate({ name: 'campaign' })} style={styles.primaryAction} />
+          <GameButton
+            title="Entrar"
+            icon="arrow-forward"
+            onPress={continueJourney}
+            style={styles.primaryAction}
+          />
         </View>
       </GameCard>
 
@@ -228,6 +253,7 @@ const styles = StyleSheet.create({
   cardKicker: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
   journeyTitle: { fontSize: 22, lineHeight: 26, fontWeight: '900', marginTop: 1 },
   journeySubtitle: { fontSize: 12, lineHeight: 16, marginTop: 3 },
+  journeyReason: { fontSize: 12, lineHeight: 16, marginTop: 3, fontWeight: '700' },
   primaryAction: { minHeight: 44, paddingHorizontal: 14 },
   byteBar: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10 },
   byteIcon: { width: 28, height: 28, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

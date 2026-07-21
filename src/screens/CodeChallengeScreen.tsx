@@ -8,6 +8,7 @@ import { codeChallengeById } from '../data/codeChallenges';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
 import { codeArenaService, defaultCodeArenaProgress } from '../services/codeArenaService';
+import { adaptiveLearningService } from '../services/adaptiveLearningService';
 import { reviewService } from '../services/reviewService';
 import { localAnalyticsService } from '../services/localAnalyticsService';
 import { professorByteAi } from '../services/professorByteAi';
@@ -93,6 +94,14 @@ export function CodeChallengeScreen({ challengeId, challengeIds, goBack }: { cha
         codeExample: challenge.code
       });
     }
+    await adaptiveLearningService.recordAttempt({
+      conceptId: challenge.concept,
+      language: challenge.language,
+      source: 'arena',
+      difficulty: challenge.difficulty,
+      correct: index === challenge.correctIndex,
+      hintsUsed: aiHint ? 1 : 0
+    }).catch(() => undefined);
     setResolving(false);
   };
 

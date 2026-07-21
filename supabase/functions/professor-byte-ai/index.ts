@@ -10,7 +10,7 @@ const AI_TIMEOUT_MS = 15000;
 
 type ProfessorBytePayload = {
   mode: 'hint' | 'explanation' | 'concept' | 'error_help';
-  source: 'campaign' | 'academy' | 'arena' | 'professor_byte';
+  source: 'campaign' | 'academy' | 'arena' | 'codeLab' | 'review' | 'professor_byte';
   language?: string;
   level?: string;
   question?: string;
@@ -19,6 +19,7 @@ type ProfessorBytePayload = {
   correctAnswer?: string;
   lessonTitle?: string;
   lessonContent?: string;
+  failedValidations?: string[];
   userProgress?: {
     level?: number;
     xp?: number;
@@ -51,9 +52,7 @@ const json = (request: Request, body: Record<string, unknown>, status = 200) =>
     headers: { ...corsHeaders(request), 'Content-Type': 'application/json; charset=utf-8' }
   });
 
-const aiFallback = (request: Request, mode: ProfessorBytePayload['mode'], reason: string) => {
-  console.warn('[professor-byte-ai] Fallback acionado', { reason, mode });
-
+const aiFallback = (request: Request, mode: ProfessorBytePayload['mode'], _reason: string) => {
   return json(request, {
     answer: 'Professor Byte está com dificuldade para responder agora. Tente novamente em instantes.',
     mode,
@@ -77,7 +76,7 @@ const isPayload = (value: unknown): value is ProfessorBytePayload => {
   return (
     Boolean(input) &&
     ['hint', 'explanation', 'concept', 'error_help'].includes(input.mode) &&
-    ['campaign', 'academy', 'arena', 'professor_byte'].includes(input.source)
+    ['campaign', 'academy', 'arena', 'codeLab', 'review', 'professor_byte'].includes(input.source)
   );
 };
 
@@ -92,6 +91,7 @@ const normalizePayload = (payload: ProfessorBytePayload): ProfessorBytePayload =
   correctAnswer: payload.mode === 'hint' ? undefined : truncate(payload.correctAnswer, 500),
   lessonTitle: truncate(payload.lessonTitle, 160),
   lessonContent: truncate(payload.lessonContent, MAX_LESSON),
+  failedValidations: sanitizeOptions(payload.failedValidations),
   userProgress: {
     level: Number.isFinite(payload.userProgress?.level) ? payload.userProgress?.level : undefined,
     xp: Number.isFinite(payload.userProgress?.xp) ? payload.userProgress?.xp : undefined,
@@ -139,6 +139,7 @@ Exercício/aula:
 - Alternativas: ${(payload.options ?? []).join(' | ') || 'não informadas'}
 - Resposta do aluno: ${payload.userAnswer ?? 'não informada'}
 - Resposta correta: ${payload.correctAnswer ?? 'não enviada'}
+- Validações que falharam: ${(payload.failedValidations ?? []).join(' | ') || 'não informadas'}
 - Conteúdo da aula: ${payload.lessonContent ?? 'não informado'}
 
 Responda com uma explicação curta e útil.`;
@@ -146,7 +147,6 @@ Responda com uma explicação curta e útil.`;
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(request) });
   if (request.method !== 'POST') return json(request, { error: 'Método não permitido.' }, 405);
-  console.log('[professor-byte-ai] Request recebida');
 
   const apiKey = Deno.env.get('OPENROUTER_API_KEY');
   if (!apiKey) {
@@ -180,13 +180,11 @@ Deno.serve(async (request) => {
 
   if (!isPayload(rawPayload)) return json(request, { error: 'Pedido inválido.' }, 400);
   const payload = normalizePayload(rawPayload);
-  console.log('[professor-byte-ai] Payload validado', { mode: payload.mode, source: payload.source });
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
   try {
-    console.log('[professor-byte-ai] Chamando OpenRouter', { model: OPENROUTER_MODEL });
     const response = await fetch(OPENROUTER_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -206,33 +204,21 @@ Deno.serve(async (request) => {
       })
     });
     clearTimeout(timeout);
-    console.log('[professor-byte-ai] OpenRouter HTTP Status', response.status);
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('[professor-byte-ai] OpenRouter erro', {
-        status: response.status,
-        body: errorBody.slice(0, 2000)
-      });
       return aiFallback(request, payload.mode, `openrouter-http-${response.status}`);
     }
 
     const data = await response.json() as OpenRouterResponse;
-    console.log('[professor-byte-ai] Resposta OpenRouter recebida');
     const answer = typeof data?.choices?.[0]?.message?.content === 'string'
       ? data.choices[0].message.content.trim()
       : '';
-    console.log('[professor-byte-ai] Texto extraído');
     if (!answer) return aiFallback(request, payload.mode, 'empty-answer');
 
     return json(request, { answer: truncate(answer, 1800), mode: payload.mode });
   } catch (error) {
     clearTimeout(timeout);
     const reason = error instanceof DOMException && error.name === 'AbortError' ? 'timeout' : 'openrouter-exception';
-    console.error('[professor-byte-ai] OpenRouter erro', {
-      status: reason,
-      body: error instanceof Error ? error.message.slice(0, 2000) : String(error).slice(0, 2000)
-    });
     return aiFallback(request, payload.mode, reason);
   }
 });

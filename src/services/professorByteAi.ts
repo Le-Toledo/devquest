@@ -1,9 +1,10 @@
 import { AiTutorContext } from '../types/aiTutor';
+import { sanitizeProfessorByteList, sanitizeProfessorByteText } from './professorByteContext';
 import { storage } from './storage';
 import { supabase } from './supabaseClient';
 
 export type ProfessorByteMode = 'hint' | 'explanation' | 'concept' | 'error_help';
-export type ProfessorByteSource = 'campaign' | 'academy' | 'arena' | 'professor_byte';
+export type ProfessorByteSource = 'campaign' | 'academy' | 'arena' | 'codeLab' | 'review' | 'professor_byte';
 
 export type ProfessorBytePayload = {
   mode: ProfessorByteMode;
@@ -16,6 +17,7 @@ export type ProfessorBytePayload = {
   correctAnswer?: string;
   lessonTitle?: string;
   lessonContent?: string;
+  failedValidations?: string[];
   userProgress?: {
     level?: number;
     xp?: number;
@@ -33,12 +35,12 @@ export type ProfessorByteResult = {
 export const PROFESSOR_BYTE_FALLBACK =
   'Não consegui acessar o Professor Byte agora, mas aqui vai uma dica: leia a pergunta com calma, identifique o conceito principal e elimine as alternativas que não fazem sentido.';
 
-const devWarn = (message: string, error?: unknown) => {
-  if (__DEV__) console.warn(`[ProfessorByteAI] ${message}`, error);
+const devWarn = (message: string) => {
+  if (__DEV__) console.warn(`[ProfessorByteAI] ${message}`);
 };
 
 const sourceFromContext = (source?: AiTutorContext['source']): ProfessorByteSource => {
-  if (source === 'campaign' || source === 'academy' || source === 'arena') return source;
+  if (source === 'campaign' || source === 'academy' || source === 'arena' || source === 'codeLab' || source === 'review') return source;
   return 'professor_byte';
 };
 
@@ -59,14 +61,15 @@ export const professorByteAi = {
     return {
       mode,
       source: sourceFromContext(context?.source),
-      language: context?.language,
-      level: context?.concept,
-      question: context?.errorPrompt ?? context?.topic ?? message,
-      options: context?.options,
-      userAnswer: context?.selectedAnswer,
-      correctAnswer: mode === 'hint' ? undefined : context?.correctAnswer,
-      lessonTitle: context?.source === 'academy' ? context.topic : undefined,
-      lessonContent: context?.source === 'academy' ? context.concept : context?.code,
+      language: sanitizeProfessorByteText(context?.language, 80),
+      level: sanitizeProfessorByteText(context?.concept, 120),
+      question: sanitizeProfessorByteText(context?.errorPrompt ?? context?.challengePrompt ?? context?.topic ?? message),
+      options: sanitizeProfessorByteList(context?.options),
+      userAnswer: sanitizeProfessorByteText(context?.selectedAnswer, 700),
+      correctAnswer: mode === 'hint' ? undefined : sanitizeProfessorByteText(context?.correctAnswer, 700),
+      lessonTitle: sanitizeProfessorByteText(context?.topic, 160),
+      lessonContent: sanitizeProfessorByteText(context?.source === 'academy' ? context.concept : context?.code, 2200),
+      failedValidations: sanitizeProfessorByteList(context?.failedValidations, 5),
       userProgress: {
         level: player.level,
         xp: player.xp,
@@ -97,19 +100,19 @@ export const professorByteAi = {
         }
       });
       if (error) {
-        devWarn('Erro ao chamar IA', error);
+        devWarn('Erro ao chamar IA');
         return { answer: PROFESSOR_BYTE_FALLBACK, mode: 'fallback', warning: 'Professor Byte offline' };
       }
 
       const answer = typeof data?.answer === 'string' ? data.answer.trim() : '';
       if (!answer) {
-        devWarn('Resposta sem answer válido', data);
+        devWarn('Resposta sem answer válido');
         return { answer: PROFESSOR_BYTE_FALLBACK, mode: 'fallback', warning: 'Professor Byte offline' };
       }
 
       return { answer, mode: 'remote' };
-    } catch (error) {
-      devWarn('Erro ao chamar IA', error);
+    } catch {
+      devWarn('Erro ao chamar IA');
       return { answer: PROFESSOR_BYTE_FALLBACK, mode: 'fallback', warning: 'Professor Byte offline' };
     }
   }

@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import { codeLabChallengeById, codeLabChallenges } from '../src/data/codeLabChallenges';
 import {
   createDefaultCodeLabProgress,
+  clearCodeLabDraft,
+  deleteCodeLabHistoryEntry,
   mergeCodeLabProgress,
   normalizeCodeLabProgress,
   recordCodeLabHint,
   recordCodeLabValidation,
+  saveCodeLabDraft,
   trimSavedCode
 } from '../src/services/codeLabProgressRules';
 import { validateCodeLabSolution } from '../src/services/codeLabValidationService';
@@ -29,15 +32,35 @@ assert.equal(validResult.passed, true, 'Solucao oficial deve passar na validacao
 assert.equal(validResult.score, 100, 'Solucao oficial deve pontuar 100.');
 
 const progress = createDefaultCodeLabProgress();
-const failedOnce = recordCodeLabValidation(progress, { challengeId: jsFilter.id, code: partialResult.feedback, score: partialResult.score, passed: false });
+const drafted = saveCodeLabDraft(progress, jsFilter.id, 'const rascunho = true;', new Date('2026-01-02T00:00:00.000Z'));
+assert.equal(drafted.attemptsByChallengeId[jsFilter.id]?.draftCode, 'const rascunho = true;', 'Rascunho deve ser persistido sem validar.');
+assert.equal(drafted.attemptsByChallengeId[jsFilter.id]?.attempts, 0, 'Salvar rascunho nao deve contar tentativa.');
+
+const failedOnce = recordCodeLabValidation(drafted, {
+  challengeId: jsFilter.id,
+  code: partialResult.feedback,
+  score: partialResult.score,
+  passed: false,
+  passedChecks: 1,
+  totalChecks: 4
+}, new Date('2026-01-02T00:01:00.000Z'));
 assert.equal(failedOnce.currentStreak, 0, 'Erro deve zerar sequencia atual.');
 assert.equal(failedOnce.attemptsByChallengeId[jsFilter.id]?.attempts, 1, 'Tentativa falha deve ser persistida.');
+assert.equal(failedOnce.attemptsByChallengeId[jsFilter.id]?.history?.[0]?.passedChecks, 1, 'Historico deve registrar checks aprovados.');
+assert.equal(failedOnce.attemptsByChallengeId[jsFilter.id]?.history?.[0]?.id, 'code-lab-lab-js-filter-active-users-1767312060000-1', 'Historico deve usar ID persistente, nao indice visual.');
 
-const completedOnce = recordCodeLabValidation(failedOnce, { challengeId: jsFilter.id, code: jsFilter.solution, score: 100, passed: true });
-const completedTwice = recordCodeLabValidation(completedOnce, { challengeId: jsFilter.id, code: jsFilter.solution, score: 90, passed: true });
+const completedOnce = recordCodeLabValidation(failedOnce, { challengeId: jsFilter.id, code: jsFilter.solution, score: 100, passed: true, passedChecks: 4, totalChecks: 4 }, new Date('2026-01-02T00:02:00.000Z'));
+const completedTwice = recordCodeLabValidation(completedOnce, { challengeId: jsFilter.id, code: jsFilter.solution, score: 90, passed: true, passedChecks: 4, totalChecks: 4 }, new Date('2026-01-02T00:03:00.000Z'));
 assert.equal(completedTwice.completedChallengeIds.filter((id) => id === jsFilter.id).length, 1, 'Conclusao deve ser idempotente.');
 assert.equal(completedTwice.attemptsByChallengeId[jsFilter.id]?.bestScore, 100, 'Melhor score nunca deve baixar.');
 assert.equal(completedTwice.totalPracticeMinutes, completedOnce.totalPracticeMinutes, 'Tempo de pratica nao deve duplicar para desafio ja concluido.');
+assert.equal(completedOnce.attemptsByChallengeId[jsFilter.id]?.draftCode, undefined, 'Conclusao deve limpar rascunho do desafio.');
+
+const deletedHistory = deleteCodeLabHistoryEntry(completedTwice, jsFilter.id, completedTwice.attemptsByChallengeId[jsFilter.id]?.history?.[0]?.id ?? '');
+assert.equal((deletedHistory.attemptsByChallengeId[jsFilter.id]?.history?.length ?? 0) + 1, completedTwice.attemptsByChallengeId[jsFilter.id]?.history?.length, 'Historico deve permitir exclusao por ID.');
+
+const clearedDraft = clearCodeLabDraft(drafted, jsFilter.id);
+assert.equal(clearedDraft.attemptsByChallengeId[jsFilter.id]?.draftCode, undefined, 'Rascunho deve poder ser removido sem apagar tentativa.');
 
 const hinted = recordCodeLabHint(recordCodeLabHint(recordCodeLabHint(recordCodeLabHint(completedTwice, jsFilter.id), jsFilter.id), jsFilter.id), jsFilter.id);
 assert.equal(hinted.attemptsByChallengeId[jsFilter.id]?.usedHints, 3, 'Dicas usadas devem respeitar limite de 3.');

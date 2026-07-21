@@ -71,6 +71,18 @@ export interface CodeLabValidationResult {
   feedback: string;
 }
 
+export interface CodeLabAttemptHistoryEntry {
+  id: string;
+  challengeId: string;
+  code: string;
+  score: number;
+  passed: boolean;
+  passedChecks: number;
+  totalChecks: number;
+  attemptNumber: number;
+  attemptedAt: string;
+}
+
 export interface CodeLabAttempt {
   challengeId: string;
   attempts: number;
@@ -82,6 +94,9 @@ export interface CodeLabAttempt {
   lastAttemptAt: string;
   completedAt?: string;
   rewarded?: boolean;
+  draftCode?: string;
+  draftUpdatedAt?: string;
+  history?: CodeLabAttemptHistoryEntry[];
 }
 
 export interface CodeLabProgress {

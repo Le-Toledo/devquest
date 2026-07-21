@@ -6,10 +6,12 @@ import { GradientScreen } from '../components/GradientScreen';
 import { shopItems } from '../data/shop';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
+import { releaseConfig } from '../services/releaseConfig';
 
 export function ShopScreen({ goBack, openPremium }: { goBack: () => void; openPremium?: () => void }) {
   const { colors } = useSettings();
   const { profile, buyItem } = usePlayer();
+  const visibleItems = releaseConfig.commercialFeaturesEnabled ? shopItems : shopItems.filter((item) => !item.premium);
 
   return (
     <GradientScreen>
@@ -22,12 +24,12 @@ export function ShopScreen({ goBack, openPremium }: { goBack: () => void; openPr
             </View>
             <View style={styles.info}>
               <Text style={[styles.title, { color: colors.text }]}>Loja</Text>
-              <Text style={[styles.subtitle, { color: colors.muted }]}>Moedas: {profile.coins}. Itens premium estao estruturados para monetizacao futura.</Text>
+              <Text style={[styles.subtitle, { color: colors.muted }]}>Moedas: {profile.coins}. Use moedas ganhas no jogo para personalizar sua jornada.</Text>
             </View>
           </View>
         </GameCard>
         {openPremium ? <GameButton title="Ver CodeQuest Premium" icon="diamond" onPress={openPremium} /> : null}
-        {shopItems.map((item) => {
+        {visibleItems.map((item) => {
           const owned = profile.ownedItems.includes(item.id);
           return (
             <GameCard key={item.id}>

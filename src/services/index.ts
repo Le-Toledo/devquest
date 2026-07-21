@@ -1,4 +1,5 @@
 export { academyProgressService } from './academyProgressService';
+export { accountDeletionService } from './accountDeletionService';
 export { aiMockService } from './aiMockService';
 export { aiTutorService } from './aiTutorService';
 export { campaignProgressService } from './campaignProgressService';
@@ -12,5 +13,7 @@ export { storage } from './storage';
 export { streakService } from './streakService';
 export { storageKeys } from './storageKeys';
 export { syncService } from './syncService';
+export { feedbackService } from './feedbackService';
+export { releaseConfig } from './releaseConfig';
 export { buildProfessorBytePrompt } from './promptBuilder';
 export { isSupabaseConfigured, supabase } from './supabaseClient';

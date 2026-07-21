@@ -25,13 +25,14 @@ import { defaultStreakState, streakService, StreakState } from '../services/stre
 import { defaultLocalAnalytics, localAnalyticsService, LocalAnalytics } from '../services/localAnalyticsService';
 import { syncService } from '../services/syncService';
 import { achievementDefinitions } from '../services/playerMetaService';
+import { accountDeletionService } from '../services/accountDeletionService';
 import { CloudProgress, SyncResult } from '../types/backend';
 import { progressToNextLevel } from '../utils/progression';
 
 export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: Navigate; goBack: () => void; initialSection?: 'account' }) {
   const { colors } = useSettings();
-  const { profile, resetProgress, updateName } = usePlayer();
-  const { configured, signOut, user } = useAuth();
+  const { profile, resetProgress, clearAccountLocalData, updateName } = usePlayer();
+  const { configured, signOut, clearLocalSession, user } = useAuth();
   const [campaignProgress, setCampaignProgress] = useState<CampaignProgress>(defaultCampaignProgress);
   const [reviewErrors, setReviewErrors] = useState<ReviewError[]>([]);
   const [academyProgress, setAcademyProgress] = useState<AcademyProgress>(defaultAcademyProgress);
@@ -44,6 +45,10 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
   const [localProgress, setLocalProgress] = useState<CloudProgress | null>(null);
   const [resetting, setResetting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteAccountArmed, setDeleteAccountArmed] = useState(false);
+  const [deleteAccountConfirmation, setDeleteAccountConfirmation] = useState('');
+  const [deleteAccountMessage, setDeleteAccountMessage] = useState('');
   const autoSyncedUserId = useRef<string | null>(null);
   const scrollRef = useRef<ScrollView | null>(null);
   const accountSectionY = useRef(0);
@@ -72,7 +77,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
     }
   }, [refreshLocalSummary, user]);
 
-  const resetProgressState = () => {
+  const resetProgressState = (options: { refreshSummary?: boolean } = { refreshSummary: true }) => {
     setCampaignProgress(defaultCampaignProgress);
     setReviewErrors([]);
     setAcademyProgress(defaultAcademyProgress);
@@ -81,7 +86,8 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
     setStreak(defaultStreakState);
     setAnalytics(defaultLocalAnalytics);
     setSyncResult(null);
-    refreshLocalSummary();
+    if (options.refreshSummary) refreshLocalSummary();
+    else setLocalProgress(null);
   };
 
   const confirmResetProgress = () => {
@@ -135,6 +141,27 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
         }
       ]
     );
+  };
+
+  const requestAccountDeletion = async () => {
+    if (deleteAccountConfirmation.trim() !== 'EXCLUIR' || deletingAccount || resetting || signingOut) return;
+    setDeletingAccount(true);
+    setDeleteAccountMessage('');
+    let deletionCompleted = false;
+    try {
+      const result = await accountDeletionService.requestAccountDeletion(user);
+      setDeleteAccountMessage(result.message);
+      if (result.status === 'deleted') {
+        deletionCompleted = true;
+        await clearAccountLocalData();
+        resetProgressState({ refreshSummary: false });
+        setDeletingAccount(false);
+        await clearLocalSession();
+        return;
+      }
+    } finally {
+      if (!deletionCompleted) setDeletingAccount(false);
+    }
   };
 
   useEffect(() => {
@@ -324,6 +351,48 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
         <GameCard>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Segurança</Text>
           <Text style={[styles.metric, { color: colors.muted }]}>Sair da conta fica na seção Conta. A ação encerra apenas a sessão desta conta, e seu progresso local permanece salvo.</Text>
+          <View style={styles.cardAction}>
+            <GameButton
+              title={deleteAccountArmed ? 'Cancelar exclusão de conta' : 'Excluir minha conta'}
+              icon={deleteAccountArmed ? 'close-circle' : 'trash'}
+              variant={deleteAccountArmed ? 'secondary' : 'danger'}
+              onPress={() => {
+                setDeleteAccountArmed((current) => !current);
+                setDeleteAccountConfirmation('');
+                setDeleteAccountMessage('');
+              }}
+              disabled={!user || deletingAccount || resetting || signingOut}
+            />
+          </View>
+          {deleteAccountArmed ? (
+            <View style={[styles.deleteBox, { borderColor: colors.danger, backgroundColor: colors.surfaceSoft }]}>
+              <Text style={[styles.metricStrong, { color: colors.text }]}>Confirmação necessária</Text>
+              <Text style={[styles.metric, { color: colors.muted }]}>
+                A exclusão real deve remover sua conta e dados associados em nuvem. A solicitação depende da Edge Function autenticada estar implantada e validada.
+              </Text>
+              <Text style={[styles.metric, { color: colors.muted }]}>Digite EXCLUIR para continuar.</Text>
+              <TextInput
+                value={deleteAccountConfirmation}
+                onChangeText={setDeleteAccountConfirmation}
+                placeholder="EXCLUIR"
+                placeholderTextColor={colors.muted}
+                autoCapitalize="characters"
+                editable={!deletingAccount}
+                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
+              />
+              {deleteAccountMessage ? <Text style={[styles.metric, { color: colors.warning }]}>{deleteAccountMessage}</Text> : null}
+              <View style={styles.cardAction}>
+                <GameButton
+                  title="Solicitar exclusão definitiva"
+                  icon="trash"
+                  variant="danger"
+                  onPress={requestAccountDeletion}
+                  loading={deletingAccount}
+                  disabled={deleteAccountConfirmation.trim() !== 'EXCLUIR' || deletingAccount || resetting || signingOut}
+                />
+              </View>
+            </View>
+          ) : null}
         </GameCard>
 
         <GameCard style={{ borderColor: colors.danger }}>
@@ -378,6 +447,7 @@ const styles = StyleSheet.create({
   metricValue: { fontSize: 18, fontWeight: '900' },
   metricLabel: { marginTop: 2, fontSize: 11, fontWeight: '800' },
   cardAction: { marginTop: 14 },
+  deleteBox: { marginTop: 14, borderWidth: 1, borderRadius: 10, padding: 12 },
   achievement: { borderTopWidth: 1, paddingTop: 10, marginTop: 10 },
   achievementTitle: { fontWeight: '900' }
 });

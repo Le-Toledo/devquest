@@ -11,6 +11,7 @@ export { CodeChallengeScreen } from './CodeChallengeScreen';
 export { CodeLabScreen } from './CodeLabScreen';
 export { CodeLabChallengeScreen } from './CodeLabChallengeScreen';
 export { DailyRewardScreen } from './DailyRewardScreen';
+export { FeedbackScreen } from './FeedbackScreen';
 export { HomeScreen } from './HomeScreen';
 export { LessonScreen } from './LessonScreen';
 export { LoginScreen } from './LoginScreen';

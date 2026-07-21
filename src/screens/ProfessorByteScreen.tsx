@@ -9,14 +9,14 @@ import { aiTutorService } from '../services/aiTutorService';
 import { AiTutorContext, AiTutorMessage, AiTutorMode } from '../types/aiTutor';
 
 const suggestions = [
-  'Explique meu erro',
-  'Me ensine Kotlin null safety',
-  'Crie um desafio de JavaScript',
-  'Analise meu código',
-  'Me ajude na entrevista'
+  'Explique mais simples',
+  'Só uma dica',
+  'Mostre onde errei',
+  'Crie um exemplo',
+  'Mini desafio'
 ];
 
-export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack: () => void; initialPrompt?: string; context?: AiTutorContext }) {
+export function ProfessorByteScreen({ goBack, openFeedback, initialPrompt, context }: { goBack: () => void; openFeedback?: () => void; initialPrompt?: string; context?: AiTutorContext }) {
   const { colors } = useSettings();
   const [messages, setMessages] = useState<AiTutorMessage[]>([]);
   const [input, setInput] = useState(initialPrompt ?? '');
@@ -79,10 +79,15 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
               <View style={styles.heroCopy}>
                 <Text style={[styles.kicker, { color: mode === 'remote' ? colors.primary : colors.warning }]}>Professor Byte</Text>
                 <Text style={[styles.title, { color: colors.text }]}>Tutor inteligente de código.</Text>
-                <Text style={[styles.subtitle, { color: colors.muted }]}>Pergunte sobre erros, linguagens, carreira ou cole código para uma revisão didática.</Text>
+                <Text style={[styles.subtitle, { color: colors.muted }]}>Pergunte sobre erros, linguagens, carreira ou cole código para uma revisão didática. Respostas de IA podem conter erros; confira antes de aplicar.</Text>
               </View>
             </View>
             {warning ? <Text style={[styles.warning, { color: colors.warning }]}>{warning}</Text> : null}
+            {openFeedback ? (
+              <View style={styles.reportAction}>
+                <GameButton title="Reportar resposta ruim" icon="flag" variant="secondary" onPress={openFeedback} disabled={loading} />
+              </View>
+            ) : null}
           </GameCard>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestions}>
@@ -111,8 +116,10 @@ export function ProfessorByteScreen({ goBack, initialPrompt, context }: { goBack
               placeholderTextColor={colors.muted}
               value={input}
               onChangeText={setInput}
+              maxLength={1600}
               style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceSoft }]}
             />
+            <Text style={[styles.inputHint, { color: colors.muted }]}>{input.trim().length}/1600 caracteres. Não envie senhas, tokens, chaves ou dados pessoais.</Text>
             <View style={styles.actions}>
               <GameButton title="Enviar" icon="send" onPress={() => send()} loading={loading} disabled={!input.trim() || loading} style={styles.actionButton} />
               <GameButton title="Limpar" icon="trash" variant="secondary" onPress={clear} disabled={loading} style={styles.actionButton} />
@@ -135,6 +142,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, lineHeight: 34, fontWeight: '900', marginTop: 4 },
   subtitle: { fontSize: 14, lineHeight: 20, marginTop: 6 },
   warning: { marginTop: 12, fontSize: 12, fontWeight: '900' },
+  reportAction: { marginTop: 12 },
   suggestions: { gap: 8 },
   suggestionButton: { minHeight: 48 },
   bubble: { borderWidth: 1, borderRadius: 16, padding: 14, maxWidth: '92%' },
@@ -143,6 +151,7 @@ const styles = StyleSheet.create({
   bubbleLabel: { fontSize: 12, fontWeight: '900', marginBottom: 6 },
   bubbleText: { fontSize: 14, lineHeight: 21 },
   input: { minHeight: 96, borderRadius: 8, borderWidth: 1, padding: 12, textAlignVertical: 'top', fontSize: 15, lineHeight: 21 },
+  inputHint: { fontSize: 12, lineHeight: 18, marginTop: 8 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
   actionButton: { flexBasis: 132, flexGrow: 1 }
 });

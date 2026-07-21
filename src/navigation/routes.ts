@@ -22,6 +22,7 @@ export type AppRoute =
   | { name: 'ranking' }
   | { name: 'shop' }
   | { name: 'settings' }
+  | { name: 'feedback' }
   | { name: 'career' }
   | { name: 'campaign' }
   | { name: 'reviewLab' };

@@ -28,6 +28,7 @@ type PlayerContextValue = {
   recentAchievements: AchievementDefinition[];
   clearRecentAchievements: () => void;
   resetProgress: () => Promise<void>;
+  clearAccountLocalData: () => Promise<void>;
   reloadProfile: () => Promise<PlayerProfile>;
 };
 
@@ -187,6 +188,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setProfile(normalizePlayerMeta(createDefaultPlayer()));
   };
 
+  const clearAccountLocalData = async () => {
+    await storage.clearAccountLocalData();
+    setRecentAchievements([]);
+    setProfile(normalizePlayerMeta(createDefaultPlayer()));
+  };
+
   const reloadProfile = async () => {
     const next = await storage.loadPlayer();
     const normalized = normalizePlayerMeta(next);
@@ -210,6 +217,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     recentAchievements,
     clearRecentAchievements,
     resetProgress,
+    clearAccountLocalData,
     reloadProfile
   };
 

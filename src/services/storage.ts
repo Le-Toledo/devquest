@@ -72,6 +72,14 @@ const progressStorageKeys = [
   storageKeys.streak
 ];
 
+const accountLocalStorageKeys = [
+  ...progressStorageKeys,
+  storageKeys.adaptiveLearning,
+  storageKeys.aiTutorHistory,
+  storageKeys.cloudSyncAt,
+  storageKeys.feedbackReports
+];
+
 export const storage = {
   async loadPlayer(): Promise<PlayerProfile> {
     const raw = await AsyncStorage.getItem(storageKeys.player);
@@ -91,5 +99,8 @@ export const storage = {
   },
   async resetProgress() {
     await AsyncStorage.multiRemove(progressStorageKeys);
+  },
+  async clearAccountLocalData() {
+    await AsyncStorage.multiRemove(accountLocalStorageKeys);
   }
 };

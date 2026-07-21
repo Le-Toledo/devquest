@@ -1,8 +1,47 @@
 import { codeLabChallengeById } from '../data/codeLabChallenges';
-import { CodeLabAttempt, CodeLabProgress } from '../types/codeLab';
+import { CodeLabAttempt, CodeLabAttemptHistoryEntry, CodeLabProgress } from '../types/codeLab';
 
 const maxCodeLength = 4000;
+export const maxCodeLabHistoryEntries = 12;
 const unique = (items: string[] = []) => Array.from(new Set(items.filter(Boolean)));
+const epoch = new Date(0).toISOString();
+
+const isIsoDate = (value?: string) => Boolean(value && !Number.isNaN(new Date(value).getTime()));
+
+const normalizeHistory = (challengeId: string, history?: CodeLabAttemptHistoryEntry[]) => {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter((entry) => entry && entry.challengeId === challengeId && typeof entry.id === 'string' && entry.id.trim())
+    .map((entry) => ({
+      id: entry.id,
+      challengeId,
+      code: trimSavedCode(entry.code ?? ''),
+      score: Math.max(0, Math.min(100, Math.round(entry.score ?? 0))),
+      passed: Boolean(entry.passed),
+      passedChecks: Math.max(0, entry.passedChecks ?? 0),
+      totalChecks: Math.max(0, entry.totalChecks ?? 0),
+      attemptNumber: Math.max(1, entry.attemptNumber ?? 1),
+      attemptedAt: isIsoDate(entry.attemptedAt) ? entry.attemptedAt : epoch
+    }))
+    .sort((a, b) => new Date(b.attemptedAt).getTime() - new Date(a.attemptedAt).getTime())
+    .slice(0, maxCodeLabHistoryEntries);
+};
+
+const buildAttempt = (challengeId: string, attempt?: Partial<CodeLabAttempt>): CodeLabAttempt => ({
+  challengeId,
+  attempts: Math.max(0, attempt?.attempts ?? 0),
+  bestScore: Math.max(0, Math.min(100, attempt?.bestScore ?? 0)),
+  completed: Boolean(attempt?.completed),
+  usedHints: Math.max(0, attempt?.usedHints ?? 0),
+  viewedSolution: Boolean(attempt?.viewedSolution),
+  lastCode: trimSavedCode(attempt?.lastCode ?? ''),
+  lastAttemptAt: isIsoDate(attempt?.lastAttemptAt) ? attempt?.lastAttemptAt ?? epoch : epoch,
+  completedAt: isIsoDate(attempt?.completedAt) ? attempt?.completedAt : undefined,
+  rewarded: Boolean(attempt?.rewarded),
+  draftCode: typeof attempt?.draftCode === 'string' ? trimSavedCode(attempt.draftCode) : undefined,
+  draftUpdatedAt: isIsoDate(attempt?.draftUpdatedAt) ? attempt?.draftUpdatedAt : undefined,
+  history: normalizeHistory(challengeId, attempt?.history)
+});
 
 export const createDefaultCodeLabProgress = (): CodeLabProgress => ({
   attemptsByChallengeId: {},
@@ -19,18 +58,7 @@ export const normalizeCodeLabProgress = (progress?: Partial<CodeLabProgress> | n
   const attemptsByChallengeId = Object.fromEntries(
     Object.entries(progress?.attemptsByChallengeId ?? {}).map(([challengeId, attempt]) => [
       challengeId,
-      {
-        challengeId,
-        attempts: Math.max(0, attempt?.attempts ?? 0),
-        bestScore: Math.max(0, attempt?.bestScore ?? 0),
-        completed: Boolean(attempt?.completed),
-        usedHints: Math.max(0, attempt?.usedHints ?? 0),
-        viewedSolution: Boolean(attempt?.viewedSolution),
-        lastCode: trimSavedCode(attempt?.lastCode ?? ''),
-        lastAttemptAt: attempt?.lastAttemptAt ?? new Date(0).toISOString(),
-        completedAt: attempt?.completedAt,
-        rewarded: Boolean(attempt?.rewarded)
-      } satisfies CodeLabAttempt
+      buildAttempt(challengeId, attempt)
     ])
   );
   const completedChallengeIds = unique([...(progress?.completedChallengeIds ?? []), ...Object.values(attemptsByChallengeId).filter((attempt) => attempt.completed).map((attempt) => attempt.challengeId)]);
@@ -48,24 +76,41 @@ export const normalizeCodeLabProgress = (progress?: Partial<CodeLabProgress> | n
 
 export const recordCodeLabValidation = (
   progress: CodeLabProgress,
-  input: { challengeId: string; code: string; score: number; passed: boolean }
+  input: { challengeId: string; code: string; score: number; passed: boolean; passedChecks?: number; totalChecks?: number },
+  now = new Date()
 ) => {
   const normalized = normalizeCodeLabProgress(progress);
   const current = normalized.attemptsByChallengeId[input.challengeId];
   const challenge = codeLabChallengeById(input.challengeId);
   const completedFirstTime = input.passed && !current?.completed;
   const currentStreak = input.passed ? normalized.currentStreak + 1 : 0;
+  const attemptedAt = now.toISOString();
+  const attemptNumber = (current?.attempts ?? 0) + 1;
+  const historyEntry: CodeLabAttemptHistoryEntry = {
+    id: `code-lab-${input.challengeId}-${now.getTime()}-${attemptNumber}`,
+    challengeId: input.challengeId,
+    code: trimSavedCode(input.code),
+    score: Math.max(0, Math.min(100, Math.round(input.score))),
+    passed: input.passed,
+    passedChecks: Math.max(0, input.passedChecks ?? 0),
+    totalChecks: Math.max(0, input.totalChecks ?? 0),
+    attemptNumber,
+    attemptedAt
+  };
   const attempt: CodeLabAttempt = {
     challengeId: input.challengeId,
-    attempts: (current?.attempts ?? 0) + 1,
+    attempts: attemptNumber,
     bestScore: Math.max(current?.bestScore ?? 0, input.score),
     completed: Boolean(current?.completed || input.passed),
     usedHints: current?.usedHints ?? 0,
     viewedSolution: current?.viewedSolution ?? false,
     lastCode: trimSavedCode(input.code),
-    lastAttemptAt: new Date().toISOString(),
-    completedAt: current?.completedAt ?? (input.passed ? new Date().toISOString() : undefined),
-    rewarded: current?.rewarded ?? false
+    lastAttemptAt: attemptedAt,
+    completedAt: current?.completedAt ?? (input.passed ? attemptedAt : undefined),
+    rewarded: current?.rewarded ?? false,
+    draftCode: input.passed ? undefined : current?.draftCode,
+    draftUpdatedAt: input.passed ? undefined : current?.draftUpdatedAt,
+    history: normalizeHistory(input.challengeId, [historyEntry, ...(current?.history ?? [])])
   };
 
   return normalizeCodeLabProgress({
@@ -77,6 +122,58 @@ export const recordCodeLabValidation = (
     currentStreak,
     bestStreak: Math.max(normalized.bestStreak, currentStreak),
     totalPracticeMinutes: normalized.totalPracticeMinutes + (completedFirstTime ? challenge?.estimatedMinutes ?? 0 : 0)
+  });
+};
+
+export const saveCodeLabDraft = (progress: CodeLabProgress, challengeId: string, code: string, now = new Date()) => {
+  const normalized = normalizeCodeLabProgress(progress);
+  const current = normalized.attemptsByChallengeId[challengeId];
+  const nextDraft = trimSavedCode(code);
+  if (current?.draftCode === nextDraft) return normalized;
+  return normalizeCodeLabProgress({
+    ...normalized,
+    currentChallengeId: challengeId,
+    attemptsByChallengeId: {
+      ...normalized.attemptsByChallengeId,
+      [challengeId]: {
+        ...buildAttempt(challengeId, current),
+        draftCode: nextDraft,
+        draftUpdatedAt: now.toISOString()
+      }
+    }
+  });
+};
+
+export const clearCodeLabDraft = (progress: CodeLabProgress, challengeId: string) => {
+  const normalized = normalizeCodeLabProgress(progress);
+  const current = normalized.attemptsByChallengeId[challengeId];
+  if (!current?.draftCode && !current?.draftUpdatedAt) return normalized;
+  return normalizeCodeLabProgress({
+    ...normalized,
+    attemptsByChallengeId: {
+      ...normalized.attemptsByChallengeId,
+      [challengeId]: {
+        ...current,
+        draftCode: undefined,
+        draftUpdatedAt: undefined
+      }
+    }
+  });
+};
+
+export const deleteCodeLabHistoryEntry = (progress: CodeLabProgress, challengeId: string, historyId: string) => {
+  const normalized = normalizeCodeLabProgress(progress);
+  const current = normalized.attemptsByChallengeId[challengeId];
+  if (!current?.history?.some((entry) => entry.id === historyId)) return normalized;
+  return normalizeCodeLabProgress({
+    ...normalized,
+    attemptsByChallengeId: {
+      ...normalized.attemptsByChallengeId,
+      [challengeId]: {
+        ...current,
+        history: current.history.filter((entry) => entry.id !== historyId)
+      }
+    }
   });
 };
 
@@ -98,7 +195,10 @@ export const recordCodeLabHint = (progress: CodeLabProgress, challengeId: string
         lastCode: current?.lastCode ?? '',
         lastAttemptAt: current?.lastAttemptAt ?? new Date().toISOString(),
         completedAt: current?.completedAt,
-        rewarded: current?.rewarded ?? false
+        rewarded: current?.rewarded ?? false,
+        draftCode: current?.draftCode,
+        draftUpdatedAt: current?.draftUpdatedAt,
+        history: current?.history ?? []
       }
     }
   });
@@ -122,7 +222,10 @@ export const markCodeLabSolutionViewed = (progress: CodeLabProgress, challengeId
         lastCode: trimSavedCode(code || current?.lastCode || ''),
         lastAttemptAt: new Date().toISOString(),
         completedAt: current?.completedAt,
-        rewarded: current?.rewarded ?? false
+        rewarded: current?.rewarded ?? false,
+        draftCode: current?.draftCode,
+        draftUpdatedAt: current?.draftUpdatedAt,
+        history: current?.history ?? []
       }
     }
   });
@@ -159,7 +262,10 @@ export const mergeCodeLabProgress = (local?: Partial<CodeLabProgress> | null, cl
       lastCode: trimSavedCode(latest?.lastCode ?? ''),
       lastAttemptAt: latest?.lastAttemptAt ?? new Date(0).toISOString(),
       completedAt: localAttempt?.completedAt ?? cloudAttempt?.completedAt,
-      rewarded: Boolean(localAttempt?.rewarded || cloudAttempt?.rewarded)
+      rewarded: Boolean(localAttempt?.rewarded || cloudAttempt?.rewarded),
+      draftCode: latest?.draftCode,
+      draftUpdatedAt: latest?.draftUpdatedAt,
+      history: normalizeHistory(challengeId, [...(localAttempt?.history ?? []), ...(cloudAttempt?.history ?? [])])
     };
   });
   return normalizeCodeLabProgress({

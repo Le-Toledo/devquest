@@ -4,11 +4,14 @@ import { CodeLabProgress } from '../types/codeLab';
 import { parseJsonOrFallback } from '../utils/jsonStorage';
 import {
   createDefaultCodeLabProgress,
+  clearCodeLabDraft,
+  deleteCodeLabHistoryEntry,
   markCodeLabRewarded,
   markCodeLabSolutionViewed,
   normalizeCodeLabProgress,
   recordCodeLabHint,
-  recordCodeLabValidation
+  recordCodeLabValidation,
+  saveCodeLabDraft
 } from './codeLabProgressRules';
 import { storageKeys } from './storageKeys';
 
@@ -22,9 +25,24 @@ export const codeLabService = {
   async save(progress: CodeLabProgress) {
     await AsyncStorage.setItem(storageKeys.codeLab, JSON.stringify(normalizeCodeLabProgress(progress)));
   },
-  async recordValidation(progress: CodeLabProgress, input: { challengeId: string; code: string; score: number; passed: boolean }) {
+  async recordValidation(progress: CodeLabProgress, input: { challengeId: string; code: string; score: number; passed: boolean; passedChecks?: number; totalChecks?: number }) {
     const next = recordCodeLabValidation(progress, input);
     await this.save(next);
+    return next;
+  },
+  async saveDraft(progress: CodeLabProgress, challengeId: string, code: string) {
+    const next = saveCodeLabDraft(progress, challengeId, code);
+    if (next !== progress) await this.save(next);
+    return next;
+  },
+  async clearDraft(progress: CodeLabProgress, challengeId: string) {
+    const next = clearCodeLabDraft(progress, challengeId);
+    if (next !== progress) await this.save(next);
+    return next;
+  },
+  async deleteHistoryEntry(progress: CodeLabProgress, challengeId: string, historyId: string) {
+    const next = deleteCodeLabHistoryEntry(progress, challengeId, historyId);
+    if (next !== progress) await this.save(next);
     return next;
   },
   async recordHint(progress: CodeLabProgress, challengeId: string) {

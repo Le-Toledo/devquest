@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { localRanking, usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
 import { leaderboardService } from '../services/leaderboardService';
+import { buildRankingPresentation } from '../services/rankingPresentationService';
 import { LeaderboardEntry } from '../types/backend';
 
 export function RankingScreen({ goBack }: { goBack: () => void }) {
@@ -18,31 +19,59 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
   const [period, setPeriod] = useState<'global' | 'weekly'>('global');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [remoteFailed, setRemoteFailed] = useState(false);
   const onlineEnabled = Boolean(configured && user);
+  const presentation = buildRankingPresentation({
+    onlineEnabled,
+    loading,
+    remoteEntries: entries,
+    localEntries: ranking,
+    remoteFailed
+  });
 
   useEffect(() => {
-    if (!onlineEnabled) return;
+    if (!onlineEnabled) {
+      setEntries([]);
+      setRemoteFailed(false);
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
     setLoading(true);
-    setError('');
+    setRemoteFailed(false);
+    setEntries([]);
+
     leaderboardService
       .list(period)
       .then((result) => {
+        if (!active) return;
         setEntries(result.entries);
-        setError(result.error ?? '');
+        setRemoteFailed(Boolean(result.error || result.disabled));
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Não foi possível carregar o ranking online.'))
-      .finally(() => setLoading(false));
+      .catch((err: unknown) => {
+        if (!active) return;
+        setRemoteFailed(true);
+        if (__DEV__) {
+          const reason = err instanceof Error ? err.name : 'UnknownError';
+          console.warn('Ranking remoto falhou; fallback local preservado.', { reason });
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [onlineEnabled, period]);
 
   return (
     <GradientScreen>
       <ScrollView contentContainerStyle={styles.container}>
         <GameButton title="Voltar" icon="chevron-back" variant="ghost" onPress={goBack} />
-        <Text style={[styles.title, { color: colors.text }]}>{onlineEnabled ? 'Ranking online' : 'Ranking local'}</Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>
-          {onlineEnabled ? 'Dados globais vindos do Supabase. Sincronize sua conta para atualizar sua posição.' : 'Entre na conta para ativar ranking global. Este ranking continua disponível offline.'}
-        </Text>
+        <Text style={[styles.title, { color: colors.text }]}>{presentation.title}</Text>
+        <Text style={[styles.subtitle, { color: colors.muted }]}>{presentation.subtitle}</Text>
 
         {onlineEnabled ? (
           <View style={styles.filters}>
@@ -51,32 +80,23 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
           </View>
         ) : null}
 
-        {loading ? (
+        {presentation.showLoading ? (
           <GameCard>
             <ActivityIndicator color={colors.primary} />
-            <Text style={[styles.centerText, { color: colors.muted }]}>Carregando ranking online...</Text>
+            <Text style={[styles.centerText, { color: colors.muted }]}>Atualizando ranking...</Text>
           </GameCard>
         ) : null}
 
-        {error ? (
-          <GameCard style={{ borderColor: colors.warning }}>
-            <Text style={[styles.name, { color: colors.text }]}>Ranking online indisponível</Text>
-            <Text style={[styles.meta, { color: colors.muted }]}>{error}</Text>
-          </GameCard>
-        ) : null}
-
-        {onlineEnabled && !loading && !error && entries.length === 0 ? (
+        {presentation.source === 'empty' && !presentation.showLoading ? (
           <GameCard>
-            <Text style={[styles.name, { color: colors.text }]}>Nenhum dev no ranking ainda</Text>
-            <Text style={[styles.meta, { color: colors.muted }]}>Sincronize sua conta para inaugurar a tabela.</Text>
+            <Text style={[styles.name, { color: colors.text }]}>{presentation.emptyTitle}</Text>
+            <Text style={[styles.meta, { color: colors.muted }]}>{presentation.emptyMessage}</Text>
           </GameCard>
         ) : null}
 
-        {onlineEnabled && !error
-          ? entries.map((entry, index) => (
-              <RankingCard key={entry.id} place={index + 1} avatar={entry.avatar} name={entry.displayName} xp={entry.xp} level={entry.level} />
-            ))
-          : ranking.map((player, index) => <RankingCard key={player.name} place={index + 1} avatar={player.avatar} name={player.name} xp={player.xp} />)}
+        {presentation.entries.map((entry, index) => (
+          <RankingCard key={entry.id} place={index + 1} avatar={entry.avatar} name={entry.name} xp={entry.xp} level={entry.level} />
+        ))}
       </ScrollView>
     </GradientScreen>
   );
