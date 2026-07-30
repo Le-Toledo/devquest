@@ -28,6 +28,7 @@ import { achievementDefinitions } from '../services/playerMetaService';
 import { accountDeletionService } from '../services/accountDeletionService';
 import { CloudProgress, SyncResult } from '../types/backend';
 import { progressToNextLevel } from '../utils/progression';
+import { leaderboardConsentService } from '../services/leaderboardConsentService';
 
 export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: Navigate; goBack: () => void; initialSection?: 'account' }) {
   const { colors } = useSettings();
@@ -153,6 +154,7 @@ export function ProfileScreen({ navigate, goBack, initialSection }: { navigate: 
       setDeleteAccountMessage(result.message);
       if (result.status === 'deleted') {
         deletionCompleted = true;
+        if (user) await leaderboardConsentService.clear(user.id);
         await clearAccountLocalData();
         resetProgressState({ refreshSummary: false });
         setDeletingAccount(false);

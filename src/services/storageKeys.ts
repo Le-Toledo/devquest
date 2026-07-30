@@ -16,3 +16,6 @@ export const storageKeys = {
   soundSettings: '@codequest/sound-settings',
   streak: '@codequest/streak'
 } as const;
+
+export const leaderboardConsentStorageKey = (userId: string) =>
+  `@codequest/leaderboard-consent/${userId}`;

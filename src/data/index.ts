@@ -8,7 +8,6 @@ export { careerTips } from './career';
 export { learningPaths } from './learningPaths';
 export { lessons } from './lessons';
 export { achievementsCatalog, dailyMissions } from './missions';
-export { premiumCatalog, premiumPlans } from './premiumPlans';
 export { questions } from './questions';
 export { reviewLessons } from './reviewLessons';
 export { shopItems } from './shop';

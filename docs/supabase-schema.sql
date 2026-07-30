@@ -53,6 +53,11 @@ alter table public.profiles enable row level security;
 alter table public.player_progress enable row level security;
 alter table public.leaderboard_entries enable row level security;
 
+-- Explicit Data API grants are required by current Supabase projects; RLS below
+-- remains the row-level authorization boundary.
+grant select, insert, update on public.profiles to authenticated;
+grant select, insert, update on public.player_progress to authenticated;
+
 drop policy if exists "Profiles are readable by owner" on public.profiles;
 create policy "Profiles are readable by owner"
   on public.profiles for select

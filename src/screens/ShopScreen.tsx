@@ -8,7 +8,7 @@ import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
 import { releaseConfig } from '../services/releaseConfig';
 
-export function ShopScreen({ goBack, openPremium }: { goBack: () => void; openPremium?: () => void }) {
+export function ShopScreen({ goBack }: { goBack: () => void }) {
   const { colors } = useSettings();
   const { profile, buyItem } = usePlayer();
   const visibleItems = releaseConfig.commercialFeaturesEnabled ? shopItems : shopItems.filter((item) => !item.premium);
@@ -23,12 +23,11 @@ export function ShopScreen({ goBack, openPremium }: { goBack: () => void; openPr
               <Ionicons name="diamond" size={28} color={colors.premium} />
             </View>
             <View style={styles.info}>
-              <Text style={[styles.title, { color: colors.text }]}>Loja</Text>
-              <Text style={[styles.subtitle, { color: colors.muted }]}>Moedas: {profile.coins}. Use moedas ganhas no jogo para personalizar sua jornada.</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Itens de recompensa</Text>
+              <Text style={[styles.subtitle, { color: colors.muted }]}>Saldo: {profile.coins} moedas ganhas jogando. Não há compra de moedas ou pagamento com dinheiro real.</Text>
             </View>
           </View>
         </GameCard>
-        {openPremium ? <GameButton title="Ver CodeQuest Premium" icon="diamond" onPress={openPremium} /> : null}
         {visibleItems.map((item) => {
           const owned = profile.ownedItems.includes(item.id);
           return (
@@ -41,14 +40,14 @@ export function ShopScreen({ goBack, openPremium }: { goBack: () => void; openPr
                   <View style={styles.itemHeader}>
                     <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
                     <View style={[styles.badge, { backgroundColor: owned ? colors.success : item.premium ? colors.premium : colors.surfaceGlow }]}>
-                      <Text style={[styles.badgeText, { color: colors.onAccent }]}>{owned ? 'Seu' : item.premium ? 'Premium' : 'Loja'}</Text>
+                      <Text style={[styles.badgeText, { color: colors.onAccent }]}>{owned ? 'Seu' : item.premium ? 'Indisponível' : 'Recompensa'}</Text>
                     </View>
                   </View>
                   <Text style={[styles.subtitle, { color: colors.muted }]}>{item.description}</Text>
-                  <Text style={[styles.price, { color: colors.accent }]}>{owned ? 'Comprado' : `${item.price} moedas`}</Text>
+                  <Text style={[styles.price, { color: colors.accent }]}>{owned ? 'Resgatado' : `${item.price} moedas ganhas no jogo`}</Text>
                 </View>
               </View>
-              <GameButton title={owned ? 'Disponivel' : 'Comprar'} icon="cart" variant="secondary" disabled={owned || item.premium} onPress={() => buyItem(item)} />
+              <GameButton title={owned ? 'Disponível' : 'Resgatar'} icon="gift" variant="secondary" disabled={owned || item.premium} onPress={() => buyItem(item)} />
             </GameCard>
           );
         })}

@@ -1,15 +1,7 @@
-export type PremiumPlanId = 'free' | 'premium';
+// Legacy filename retained to avoid a broad persistence/type migration.
+// No payment, plan, subscription or IAP types are exposed in this release.
 export type OnboardingGoal = 'zero' | 'practice' | 'interview' | 'career';
 export type InitialTrack = 'frontend' | 'backend' | 'mobile' | 'fullstack' | 'career';
-
-export interface PremiumPlan {
-  id: PremiumPlanId;
-  title: string;
-  priceLabel: string;
-  description: string;
-  benefits: string[];
-  highlighted?: boolean;
-}
 
 export interface OnboardingState {
   completed: boolean;

@@ -17,7 +17,6 @@ import {
   LoginScreen,
   MapScreen,
   OnboardingScreen,
-  PremiumScreen,
   ProfessorByteScreen,
   ProfileScreen,
   QuizScreen,
@@ -30,8 +29,8 @@ import { streakService } from '@services';
 import { useAuth } from '../hooks/useAuth';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
-import { releaseConfig } from '../services/releaseConfig';
 import { syncService } from '../services/syncService';
+import { leaderboardService } from '../services/leaderboardService';
 
 export function AppNavigator() {
   const { session, loading: checkingAuth } = useAuth();
@@ -106,14 +105,18 @@ export function AppNavigator() {
     if (pushTimer.current) clearTimeout(pushTimer.current);
     pushTimer.current = setTimeout(() => {
       syncService.pushLocal(user).then((result) => {
-        if (result.status === 'synced') lastPushSignature.current = profileSyncSignature;
+        if (result.status === 'synced') {
+          lastPushSignature.current = profileSyncSignature;
+          // publish() performs its own persisted-consent check before touching the network.
+          leaderboardService.publish(user.id, profile).catch(() => undefined);
+        }
       }).catch(() => undefined);
     }, 900);
 
     return () => {
       if (pushTimer.current) clearTimeout(pushTimer.current);
     };
-  }, [playerLoading, profileSyncSignature, user]);
+  }, [playerLoading, profile, profileSyncSignature, user]);
 
   if (checkingAuth || checkingOnboarding || playerLoading) return <AuthLoadingScreen />;
   if (!session) return <LoginScreen goBack={() => undefined} openRegister={() => undefined} openAccount={goHome} showBackButton={false} />;
@@ -127,7 +130,6 @@ export function AppNavigator() {
 
   if (route.name === 'account') return withToast(<ProfileScreen navigate={setRoute} goBack={goHome} initialSection="account" />);
   if (route.name === 'map') return withToast(<MapScreen navigate={setRoute} goBack={goHome} />);
-  if (route.name === 'premium') return withToast(<PremiumScreen goBack={goHome} />);
   if (route.name === 'dailyReward') return withToast(<DailyRewardScreen goBack={goHome} />);
   if (route.name === 'achievements') return withToast(<AchievementsScreen goBack={goHome} />);
   if (route.name === 'academy') return withToast(<AcademyScreen navigate={setRoute} goBack={goHome} />);
@@ -140,7 +142,7 @@ export function AppNavigator() {
   if (route.name === 'profile') return withToast(<ProfileScreen navigate={setRoute} goBack={goHome} />);
   if (route.name === 'professorByte') return withToast(<ProfessorByteScreen goBack={() => setRoute(route.returnTo ?? { name: 'home' })} openFeedback={() => setRoute({ name: 'feedback' })} initialPrompt={route.initialPrompt} context={route.context} />);
   if (route.name === 'ranking') return withToast(<RankingScreen goBack={goHome} />);
-  if (route.name === 'shop') return withToast(<ShopScreen goBack={goHome} openPremium={releaseConfig.commercialFeaturesEnabled ? () => setRoute({ name: 'premium' }) : undefined} />);
+  if (route.name === 'shop') return withToast(<ShopScreen goBack={goHome} />);
   if (route.name === 'settings') return withToast(<SettingsScreen goBack={goHome} openAccount={() => setRoute({ name: 'account' })} openFeedback={() => setRoute({ name: 'feedback' })} />);
   if (route.name === 'feedback') return withToast(<FeedbackScreen goBack={goHome} />);
   if (route.name === 'career') return withToast(<CareerScreen navigate={setRoute} goBack={goHome} />);

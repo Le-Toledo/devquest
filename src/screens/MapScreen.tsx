@@ -9,6 +9,7 @@ import { stages, worlds } from '../data/worlds';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
 import { Navigate } from '../navigation/routes';
+import { releaseConfig } from '../services/releaseConfig';
 
 export function MapScreen({ navigate, goBack }: { navigate: Navigate; goBack: () => void }) {
   const { colors } = useSettings();
@@ -31,7 +32,7 @@ export function MapScreen({ navigate, goBack }: { navigate: Navigate; goBack: ()
           <ProgressBar value={progress} color={colors.accent} />
         </GameCard>
 
-        {worlds.map((world) => {
+        {worlds.filter((world) => releaseConfig.commercialFeaturesEnabled || !world.premium).map((world) => {
           const worldStages = stages.filter((stage) => stage.worldId === world.id);
           const locked = profile.level < world.requiredLevel;
           return (

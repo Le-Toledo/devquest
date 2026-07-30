@@ -10,7 +10,6 @@ import { useReview } from '../hooks/useReview';
 import { useSettings } from '../hooks/useSettings';
 import { Navigate } from '../navigation/routes';
 import { buildJourneyRecommendation, resolveJourneyRecommendationMotivation, resolveJourneyRecommendationRoute } from '../services/journeyRecommendationService';
-import { releaseConfig } from '../services/releaseConfig';
 import { StreakState } from '../services/streakService';
 import { GameButton } from './GameButton';
 import { GameCard } from './GameCard';
@@ -61,10 +60,7 @@ export function HomeDashboard({ navigate, streak }: { navigate: Navigate; streak
     { title: 'Laboratório de Código', subtitle: 'Escrita e validação', icon: 'terminal', tone: 'primary', onPress: () => navigate({ name: 'codeLab' }) },
     { title: 'Laboratório', subtitle: 'Treino com erros', icon: 'flask', tone: 'success', onPress: () => navigate({ name: 'reviewLab' }) },
     { title: 'Conquistas', subtitle: 'Metas e recompensas', icon: 'trophy', tone: 'success', onPress: () => navigate({ name: 'achievements' }) },
-    { title: 'Loja', subtitle: 'Itens e moedas', icon: 'storefront', tone: 'accent', onPress: () => navigate({ name: 'shop' }) },
-    ...(releaseConfig.commercialFeaturesEnabled
-      ? [{ title: 'Premium', subtitle: 'Benefícios', icon: 'diamond' as const, tone: 'premium' as const, onPress: () => navigate({ name: 'premium' }) }]
-      : [])
+    { title: 'Recompensas', subtitle: 'Itens com moedas ganhas', icon: 'gift', tone: 'accent', onPress: () => navigate({ name: 'shop' }) },
   ];
 
   const colorFor = (tone: ModeTile['tone']) => {

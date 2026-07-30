@@ -6,7 +6,6 @@ export type AppRoute =
   | { name: 'login' }
   | { name: 'register' }
   | { name: 'account' }
-  | { name: 'premium' }
   | { name: 'dailyReward' }
   | { name: 'achievements' }
   | { name: 'academy' }

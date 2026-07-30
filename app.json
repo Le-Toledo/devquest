@@ -3,7 +3,7 @@
     "icon": "./assets/Designer.png",
     "name": "Code Quest",
     "slug": "code-quest",
-    "version": "1.0.1",
+    "version": "1.0.5",
     "orientation": "portrait",
     "scheme": "codequest",
     "userInterfaceStyle": "dark",
@@ -16,11 +16,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.leandrotoledo.codequest",
-      "buildNumber": "2"
+      "buildNumber": "8"
     },
     "android": {
       "package": "com.leandrotoledo.codequest",
-      "versionCode": 2
+      "versionCode": 8
     },
     "web": {
       "bundler": "metro"

@@ -18,7 +18,6 @@ export { LoginScreen } from './LoginScreen';
 export { MapScreen } from './MapScreen';
 export { MissionResultScreen } from './MissionResultScreen';
 export { OnboardingScreen } from './OnboardingScreen';
-export { PremiumScreen } from './PremiumScreen';
 export { ProfessorByteScreen } from './ProfessorByteScreen';
 export { ProfileScreen } from './ProfileScreen';
 export { QuizScreen } from './QuizScreen';

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GameButton } from '../components/GameButton';
 import { GameCard } from '../components/GameCard';
 import { GradientScreen } from '../components/GradientScreen';
@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { localRanking, usePlayer } from '../hooks/usePlayer';
 import { useSettings } from '../hooks/useSettings';
 import { leaderboardService } from '../services/leaderboardService';
+import { leaderboardConsentService, LeaderboardConsentStatus } from '../services/leaderboardConsentService';
 import { buildRankingPresentation } from '../services/rankingPresentationService';
 import { LeaderboardEntry } from '../types/backend';
 
@@ -20,7 +21,10 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [remoteFailed, setRemoteFailed] = useState(false);
-  const onlineEnabled = Boolean(configured && user);
+  const [consent, setConsent] = useState<LeaderboardConsentStatus>('unknown');
+  const [consentLoaded, setConsentLoaded] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
+  const onlineEnabled = Boolean(configured && user && consent === 'accepted');
   const presentation = buildRankingPresentation({
     onlineEnabled,
     loading,
@@ -28,6 +32,30 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
     localEntries: ranking,
     remoteFailed
   });
+
+  useEffect(() => {
+    if (!user) {
+      setConsent('unknown');
+      setConsentLoaded(true);
+      return;
+    }
+    setConsentLoaded(false);
+    leaderboardConsentService.get(user.id).then((status) => {
+      setConsent(status);
+      setShowConsent(status === 'unknown');
+    }).finally(() => setConsentLoaded(true));
+  }, [user]);
+
+  const chooseConsent = async (status: 'accepted' | 'declined') => {
+    if (!user) return;
+    await leaderboardConsentService.set(user.id, status);
+    setConsent(status);
+    setShowConsent(false);
+    if (status === 'accepted') {
+      const result = await leaderboardService.publish(user.id, profile);
+      if (result.error) setRemoteFailed(true);
+    }
+  };
 
   useEffect(() => {
     if (!onlineEnabled) {
@@ -73,6 +101,16 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
         <Text style={[styles.title, { color: colors.text }]}>{presentation.title}</Text>
         <Text style={[styles.subtitle, { color: colors.muted }]}>{presentation.subtitle}</Text>
 
+        {user && consentLoaded && consent !== 'accepted' ? (
+          <GameCard>
+            <Text style={[styles.name, { color: colors.text }]}>Ranking Global opcional</Text>
+            <Text style={[styles.meta, { color: colors.muted }]}>Seu progresso continua local e privado até você escolher participar.</Text>
+            <View style={styles.cardAction}>
+              <GameButton title="Escolher participação" icon="shield-checkmark" onPress={() => setShowConsent(true)} />
+            </View>
+          </GameCard>
+        ) : null}
+
         {onlineEnabled ? (
           <View style={styles.filters}>
             <GameButton title="Global" icon="earth" variant={period === 'global' ? 'primary' : 'secondary'} onPress={() => setPeriod('global')} style={styles.filterButton} />
@@ -98,6 +136,18 @@ export function RankingScreen({ goBack }: { goBack: () => void }) {
           <RankingCard key={entry.id} place={index + 1} avatar={entry.avatar} name={entry.name} xp={entry.xp} level={entry.level} />
         ))}
       </ScrollView>
+      <Modal visible={showConsent} transparent animationType="fade" onRequestClose={() => chooseConsent('declined')}>
+        <View style={styles.modalBackdrop}>
+          <GameCard style={styles.modalCard}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Participar do Ranking Global?</Text>
+            <Text style={[styles.modalText, { color: colors.muted }]}>Para participar do Ranking Global do CodeQuest, seu nome de perfil e sua pontuação serão enviados e armazenados em nossos servidores e poderão aparecer para outros jogadores.{`\n\n`}A participação é opcional. Você poderá alterar essa escolha posteriormente nas Configurações.</Text>
+            <View style={styles.modalActions}>
+              <GameButton title="Agora não" icon="close" variant="secondary" onPress={() => chooseConsent('declined')} style={styles.modalButton} />
+              <GameButton title="Participar" icon="podium" onPress={() => chooseConsent('accepted')} style={styles.modalButton} />
+            </View>
+          </GameCard>
+        </View>
+      </Modal>
     </GradientScreen>
   );
 }
@@ -139,5 +189,12 @@ const styles = StyleSheet.create({
   avatarText: { fontWeight: '900' },
   info: { flex: 1 },
   name: { fontWeight: '900', fontSize: 16 },
-  meta: { fontSize: 13, marginTop: 2 }
+  meta: { fontSize: 13, marginTop: 2 },
+  cardAction: { marginTop: 12 },
+  modalBackdrop: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.72)' },
+  modalCard: { width: '100%', maxWidth: 620, alignSelf: 'center' },
+  modalTitle: { fontSize: 22, fontWeight: '900', marginBottom: 10 },
+  modalText: { fontSize: 15, lineHeight: 22 },
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 20 },
+  modalButton: { flex: 1 }
 });
