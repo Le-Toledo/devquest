@@ -17,11 +17,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.codequest.academy",
+      "bundleIdentifier": "com.leandrotoledo.codequest",
       "buildNumber": "8"
     },
     "android": {
-      "package": "com.codequest.academy",
+      "package": "com.leandrotoledo.codequest",
       "versionCode": 8
     },
     "web": {
