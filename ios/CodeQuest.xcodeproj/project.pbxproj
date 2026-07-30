@@ -8,26 +8,26 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		33432FC7AD8AB5B24C7348FB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0589BDBCFCAC9BC56B903692 /* PrivacyInfo.xcprivacy */; };
+		35FF5FA07E1BF7FD714047CD /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD03E76FD3FE9C33800CD3A /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		4CEDD262BF3038DC2ED89C88 /* libPods-CodeQuest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B1487AE24E7096C5A0CBA0A2 /* libPods-CodeQuest.a */; };
-		54188B46221D722909231033 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C556773F2C8266F657C28B03 /* PrivacyInfo.xcprivacy */; };
-		6FF849B5C829BA98D10FD8BB /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CB0B713A1632240B4A87F3F /* ExpoModulesProvider.swift */; };
+		93A9A10A090E32C59DB78A95 /* libPods-CodeQuest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DCF83F7B468C1E779A97C256 /* libPods-CodeQuest.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0589BDBCFCAC9BC56B903692 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = CodeQuest/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* CodeQuest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodeQuest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = CodeQuest/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CodeQuest/Info.plist; sourceTree = "<group>"; };
-		1529BB363A24E13989455A01 /* Pods-CodeQuest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CodeQuest.release.xcconfig"; path = "Target Support Files/Pods-CodeQuest/Pods-CodeQuest.release.xcconfig"; sourceTree = "<group>"; };
-		7CB0B713A1632240B4A87F3F /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-CodeQuest/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		4DD03E76FD3FE9C33800CD3A /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-CodeQuest/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = CodeQuest/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B1487AE24E7096C5A0CBA0A2 /* libPods-CodeQuest.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CodeQuest.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C3823EA1BBA6178435144176 /* Pods-CodeQuest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CodeQuest.debug.xcconfig"; path = "Target Support Files/Pods-CodeQuest/Pods-CodeQuest.debug.xcconfig"; sourceTree = "<group>"; };
-		C556773F2C8266F657C28B03 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = CodeQuest/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		DCF83F7B468C1E779A97C256 /* libPods-CodeQuest.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CodeQuest.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF9E836BB95DF26338C402F5 /* Pods-CodeQuest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CodeQuest.release.xcconfig"; path = "Target Support Files/Pods-CodeQuest/Pods-CodeQuest.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EFA19A57B4C39507D832FF34 /* Pods-CodeQuest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CodeQuest.debug.xcconfig"; path = "Target Support Files/Pods-CodeQuest/Pods-CodeQuest.debug.xcconfig"; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = CodeQuest/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* CodeQuest-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CodeQuest-Bridging-Header.h"; path = "CodeQuest/CodeQuest-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -37,21 +37,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4CEDD262BF3038DC2ED89C88 /* libPods-CodeQuest.a in Frameworks */,
+				93A9A10A090E32C59DB78A95 /* libPods-CodeQuest.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		01355FFD8F28EE33F55A7A1D /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				626A47870EDD9ADC3D2217DD /* CodeQuest */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* CodeQuest */ = {
 			isa = PBXGroup;
 			children = (
@@ -61,35 +53,27 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				C556773F2C8266F657C28B03 /* PrivacyInfo.xcprivacy */,
+				0589BDBCFCAC9BC56B903692 /* PrivacyInfo.xcprivacy */,
 			);
 			name = CodeQuest;
-			sourceTree = "<group>";
-		};
-		1C5A77D279BF4AFD8C4F4354 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				C3823EA1BBA6178435144176 /* Pods-CodeQuest.debug.xcconfig */,
-				1529BB363A24E13989455A01 /* Pods-CodeQuest.release.xcconfig */,
-			);
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				B1487AE24E7096C5A0CBA0A2 /* libPods-CodeQuest.a */,
+				DCF83F7B468C1E779A97C256 /* libPods-CodeQuest.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		626A47870EDD9ADC3D2217DD /* CodeQuest */ = {
+		7C4241E0232AB86407A6112A /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				7CB0B713A1632240B4A87F3F /* ExpoModulesProvider.swift */,
+				EFA19A57B4C39507D832FF34 /* Pods-CodeQuest.debug.xcconfig */,
+				DF9E836BB95DF26338C402F5 /* Pods-CodeQuest.release.xcconfig */,
 			);
-			name = CodeQuest;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -106,8 +90,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				1C5A77D279BF4AFD8C4F4354 /* Pods */,
-				01355FFD8F28EE33F55A7A1D /* ExpoModulesProviders */,
+				7C4241E0232AB86407A6112A /* Pods */,
+				AFF504808ADD473AE264AE7B /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -120,6 +104,22 @@
 				13B07F961A680F5B00A75B9A /* CodeQuest.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AB8D5CD3949B0D57BE02C574 /* CodeQuest */ = {
+			isa = PBXGroup;
+			children = (
+				4DD03E76FD3FE9C33800CD3A /* ExpoModulesProvider.swift */,
+			);
+			name = CodeQuest;
+			sourceTree = "<group>";
+		};
+		AFF504808ADD473AE264AE7B /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				AB8D5CD3949B0D57BE02C574 /* CodeQuest */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -139,13 +139,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CodeQuest" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				79C58379ABB3C988A319FF4D /* [Expo] Configure project */,
+				52CF33277B59B77D788B8038 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				D4B08BC6E071B752EF4EA8AC /* [CP] Embed Pods Frameworks */,
+				1B618554A6ABF10A42E6AAD6 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -195,7 +195,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				54188B46221D722909231033 /* PrivacyInfo.xcprivacy in Resources */,
+				33432FC7AD8AB5B24C7348FB /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,7 +241,29 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		79C58379ABB3C988A319FF4D /* [Expo] Configure project */ = {
+		1B618554A6ABF10A42E6AAD6 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CodeQuest/Pods-CodeQuest-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CodeQuest/Pods-CodeQuest-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		52CF33277B59B77D788B8038 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -293,28 +315,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CodeQuest/Pods-CodeQuest-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		D4B08BC6E071B752EF4EA8AC /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CodeQuest/Pods-CodeQuest-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CodeQuest/Pods-CodeQuest-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -323,7 +323,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				6FF849B5C829BA98D10FD8BB /* ExpoModulesProvider.swift in Sources */,
+				35FF5FA07E1BF7FD714047CD /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,7 +332,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C3823EA1BBA6178435144176 /* Pods-CodeQuest.debug.xcconfig */;
+			baseConfigurationReference = EFA19A57B4C39507D832FF34 /* Pods-CodeQuest.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -369,7 +369,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1529BB363A24E13989455A01 /* Pods-CodeQuest.release.xcconfig */;
+			baseConfigurationReference = DF9E836BB95DF26338C402F5 /* Pods-CodeQuest.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

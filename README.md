@@ -1,18 +1,82 @@
 # Code Quest
 
-MVP premium de jogo educacional em React Native com Expo SDK 54 e TypeScript. O app ensina programacao por campanha RPG, quizzes, Arena de Codigo, Academia Dev, Laboratorio de Revisao, XP, moedas, conquistas, loja, streak, premium simulado e progresso persistido.
+Jogo educacional mobile que ensina programacao por meio de uma jornada gamificada. A versao de producao atual e **1.0.5** (iOS build **8** e Android versionCode **8**).
 
-## Como rodar
+## Principais funcionalidades
+
+- Campanha RPG guiada pelo Professor Byte, com capitulos, missoes e bosses.
+- Academia Dev com trilhas, modulos, aulas e desafios praticos.
+- Quizzes, Arena de Codigo e Laboratorio de Codigo.
+- Laboratorio de Revisao com repeticao espacada a partir dos erros do jogador.
+- XP, moedas, streak, conquistas, recompensas e progresso persistido.
+- Temas claro e escuro, suporte offline e sincronizacao opcional com a nuvem.
+- Feedback, exclusao de conta e recursos de preparacao para publicacao nas lojas.
+
+## Tecnologias utilizadas
+
+- React Native 0.81 e React 19.
+- Expo SDK 54, Expo Router e EAS Build.
+- TypeScript.
+- AsyncStorage para persistencia local.
+- Supabase para autenticacao, dados e sincronizacao em nuvem.
+- ESLint e scripts de auditoria/testes para qualidade.
+
+## Instalacao e execucao local
+
+Requisitos: Node.js LTS, npm e um ambiente compativel com Expo. Para builds nativos locais, instale tambem Android Studio/JDK (Android) ou Xcode/CocoaPods (iOS, somente macOS).
 
 ```bash
-npm install
+npm ci
 npx expo start
 ```
 
-Depois abra no Expo Go pelo QR Code. Para web:
+Abra o app no Expo Go pelo QR Code ou escolha um simulador no terminal. Para executar diretamente os projetos nativos:
 
 ```bash
-npx expo start --web
+npm run android
+npm run ios
+```
+
+Para web:
+
+```bash
+npm run web
+```
+
+## Builds Android e iOS
+
+Autentique a CLI do EAS antes do primeiro build (`npx eas-cli login`). Os perfis disponiveis ficam em `eas.json`.
+
+Builds de producao para envio as lojas:
+
+```bash
+npx eas-cli build --platform android --profile production
+npx eas-cli build --platform ios --profile production
+```
+
+Para gerar ambos em uma unica execucao:
+
+```bash
+npx eas-cli build --platform all --profile production
+```
+
+Builds locais de desenvolvimento continuam disponiveis com:
+
+```bash
+npm install
+npx expo run:android
+npx expo run:ios
+```
+
+Antes de publicar, confirme em `app.json` a versao **1.0.5**, o build iOS **8**, o versionCode Android **8** e o icone `./assets/Designer.png`. O perfil `production` usa incremento automatico remoto no EAS; nao altere identificadores, Project ID, secrets ou configuracoes de producao para builds de manutencao.
+
+## Validacao antes do build
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run test:release
 ```
 
 ## Qualidade das perguntas

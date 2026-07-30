@@ -43,7 +43,7 @@ const validInput = {
   visualCategory: 'bug_report' as const,
   message: 'O botão de continuar não respondeu na tela de campanha.',
   screen: 'Campanha',
-  appVersion: '1.0.0',
+  appVersion: '1.0.5',
   platform: 'ios'
 };
 
