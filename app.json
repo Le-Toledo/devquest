@@ -2,7 +2,8 @@
   "expo": {
     "name": "CodeQuest Academy",
     "slug": "codequest-academy",
-    "version": "1.0.0",
+    "version": "1.0.5",
+    "icon": "./assets/Designer.png",
     "orientation": "portrait",
     "scheme": "codequestacademy",
     "userInterfaceStyle": "dark",
@@ -16,10 +17,12 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.codequest.academy"
+      "bundleIdentifier": "com.codequest.academy",
+      "buildNumber": "8"
     },
     "android": {
-      "package": "com.codequest.academy"
+      "package": "com.codequest.academy",
+      "versionCode": 8
     },
     "web": {
       "bundler": "metro"
