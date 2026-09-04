@@ -2,6 +2,19 @@
 
 MVP premium de jogo educacional em React Native com Expo SDK 54 e TypeScript. O app ensina programacao por campanha RPG, quizzes, Arena de Codigo, Academia Dev, Laboratorio de Revisao, XP, moedas, conquistas, loja, streak, premium simulado e progresso persistido.
 
+## 📱 Screenshots
+
+<p align="center">
+  <img src="assets/screenshots/showcase-home.png" alt="Apresentacao do CodeQuest Academy" width="23%" />
+  <img src="assets/screenshots/home.png" alt="Tela inicial do CodeQuest Academy" width="23%" />
+  <img src="assets/screenshots/campaign.png" alt="Modo campanha e trilhas de aprendizado" width="23%" />
+  <img src="assets/screenshots/code-arena.png" alt="Arena de Codigo com desafios praticos" width="23%" />
+</p>
+
+<p align="center">
+  <sub><strong>Apresentacao</strong> · <strong>Inicio</strong> · <strong>Campanha</strong> · <strong>Arena de Codigo</strong></sub>
+</p>
+
 ## Como rodar
 
 ```bash
